@@ -48,8 +48,8 @@ module.exports = {
         if (results[0][0] === undefined) return next(true)
 
         result.web = results[0][0].id
-        result.logblock = results[1][0].id
-        result.auth = results[2][0].id
+        result.auth = results[1][0].user_id
+        result.logblock = results[2][0].playerid
 
         return next(undefined, result)
       })
