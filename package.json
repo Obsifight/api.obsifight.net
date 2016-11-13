@@ -4,12 +4,13 @@
   "description": "NodeJS API for ObsiFight minecraft server",
   "main": "app.js",
   "dependencies": {
+    "async": "^2.1.2",
     "body-parser": "^1.15.2",
-    "mysql": "^2.11.1",
     "express": "^4.14.0",
+    "jsonwebtoken": "^7.1.9",
+    "mysql": "^2.11.1",
     "pug": "^2.0.0-beta6",
-    "sha1": "^1.1.1",
-    "async": "^2.1.2"
+    "sha1": "^1.1.1"
   },
   "devDependencies": {},
   "scripts": {

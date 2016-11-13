@@ -1,5 +1,7 @@
 module.exports = {
 
-  'get /user/:id': 'UserController.get'
+  'post /authenticate': 'AuthController.generateToken',
+
+  'get /user/:id': {function: 'UserController.get', protected: true}
 
 }
