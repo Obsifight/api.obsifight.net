@@ -2,3 +2,5 @@
 .__MACOSX
 node_modules
 adminmysql
+app/config/db.js
+app/config/global.js
