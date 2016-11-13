@@ -7,6 +7,13 @@ module.exports = {
     // Find user
     User.getIds(req.params.id, function (err, ids) {
       if (err || ids.web === 0) return res.status(404).json({status: false, error: 'User not found.'})
+
+      res.json({
+        status: true,
+        data: {
+          ids: ids
+        }
+      })
     })
   }
 
