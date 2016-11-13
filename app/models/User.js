@@ -12,7 +12,7 @@ module.exports = {
 
     // web
     if (username == parseInt(username)) { // is an id
-      db.get('web_v5').query("SELECT `pseudo` FROM users WHERE `id` = '" + username + "' LIMIT 1", function (err, rows, fields) {
+      db.get('web_v5').query("SELECT `pseudo` FROM users WHERE `id` = " + username + " LIMIT 1", function (err, rows, fields) {
         if (err) throw err
         queries(rows[0].pseudo)
       })
@@ -24,21 +24,21 @@ module.exports = {
       async.parallel([
         // web
         function (callback) {
-          db.get('web_v5').query("SELECT id FROM users WHERE `pseudo` = '" + username + "' LIMIT 1", function (err, rows, fields) {
+          db.get('web_v5').query("SELECT `id` FROM users WHERE `pseudo` = '" + username + "' LIMIT 1", function (err, rows, fields) {
             if (err) return callback(err)
             callback(undefined, rows)
           })
         },
         // auth
         function (callback) {
-          db.get('auth').query("SELECT `id` FROM `joueurs` WHERE `user_pseudo` = '" + username + "' LIMIT 1", function (err, rows, fields) {
+          db.get('auth').query("SELECT `user_id` FROM `joueurs` WHERE `user_pseudo` = '" + username + "' LIMIT 1", function (err, rows, fields) {
             if (err) return callback(err)
             callback(undefined, rows)
           })
         },
         // logblock
         function (callback) {
-          db.get('logblock').query("SELECT `id` FROM `lb-players` WHERE `playername` = '" + username + "' LIMIT 1", function (err, rows, fields) {
+          db.get('logblock').query("SELECT `playerid` FROM `lb-players` WHERE `playername` = '" + username + "' LIMIT 1", function (err, rows, fields) {
             if (err) return callback(err)
             callback(undefined, rows)
           })
