@@ -13,7 +13,10 @@ module.exports = {
     async.parallel([
       // web
       function (callback) {
-        db.get('web_v5').query('SELECT id FROM users WHERE id = `' + id + '` LIMIT 1', callback)
+        db.get('web_v5').query('SELECT id FROM users WHERE id = `' + id + '` LIMIT 1', function (err, rows, fields) {
+          if (err) return callback(err)
+          callback(undefined, rows)
+        })
       }
     ], function (err, results) {
       if (err) throw err

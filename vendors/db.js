@@ -11,13 +11,15 @@ module.exports = {
   },
 
   get: function (connectionName) {
-    if (this.connections[connectionName] === undefined)
+    if (this.connections[connectionName] === undefined) {
       this.connections[connectionName] = mysql.createConnection({
         host: this.config[connectionName].host,
         user: this.config[connectionName].user,
         password: this.config[connectionName].password,
         database: this.config[connectionName].dbname
-      }).connect()
+      })
+      this.connections[connectionName].connect()
+    }
 
     return this.connections[connectionName]
   }
