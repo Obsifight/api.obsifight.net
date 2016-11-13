@@ -14,7 +14,7 @@ module.exports = {
     if (username == parseInt(username)) { // is an id
       db.get('web_v5').query("SELECT `pseudo` FROM users WHERE `id` = '" + username + "' LIMIT 1", function (err, rows, fields) {
         if (err) throw err
-        queries(rows[0][0].pseudo)
+        queries(rows[0].pseudo)
       })
     } else {
       queries(username)
