@@ -3,17 +3,24 @@ var express = require('express')
 var app = express()
 
 app.use(express.static('public'))
-app.set('views', './app/view')
-app.set('view engine', 'pug')
 
 // body parse
 var bodyParser = require('body-parser')
-app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
+// handle accept
+app.use(function (req, res, next) {
+  if (!req.accepts('json')) {
+    res.status(403)
+    res.json({status: false, error: 'API only accept JSON.'})
+    return
+  }
+  next()
+})
+
 // auth
-var auth = require('./app/middleware/auth')
-app.use(auth.logged)
+// var auth = require('./app/middleware/auth')
+// app.use(auth.logged)
 
 // include config
 var config = require('./app/config/global')
@@ -35,6 +42,26 @@ for (var route in routes) {
   // init route
   app[method](url, require('./app/controller/' + controller)[action])
 }
+
+// models & db connection
+global.db = require('./vendors/db').setConfig(require('./app/config/db'))
+
+var fs = require('fs')
+fs.readdir('./app/models', function (err, files) {
+  if (err) return false
+  files.forEach(function (file) {
+    global[file.split('.js')[0]] = require('./app/models/' + file)
+  })
+})
+
+// handle 404
+
+app.use(function (req, res, next) {
+  res.status(404)
+
+  // respond with json
+  res.json({status: false, error: 'Method not found.'})
+})
 
 // Listen requests
 app.listen(config.port, function () {
