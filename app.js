@@ -96,8 +96,20 @@ app.use(function (err, req, res, next) {
 })
 
 // =======================
+// PMX ================
+// =======================
+var probe = pmx.probe()
+
+var meter = probe.meter({
+  name: 'req/min',
+  samples: 1,
+  timeframe: 60
+})
+
+// =======================
 // Listen ================
 // =======================
 app.listen(config.port, function () {
+  meter.mark()
   console.log('App listen on port ' + config.port)
 })
