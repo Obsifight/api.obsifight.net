@@ -1,11 +1,6 @@
 // =======================
 // INIT =================
 // =======================
-var express = require('express')
-var app = express()
-
-app.use(express.static('public'))
-
 var pmx = require('pmx').init({
   http: true, // HTTP routes logging (default: true)
   errors: true, // Exceptions loggin (default: true)
@@ -13,6 +8,12 @@ var pmx = require('pmx').init({
   network: true, // Network monitoring at the application level
   ports: true  // Shows which ports your app is listening on (default: false)
 })
+pmx.http()
+
+var express = require('express')
+var app = express()
+
+app.use(express.static('public'))
 
 // =======================
 // Body & Accept =========
@@ -27,6 +28,23 @@ app.use(function (req, res, next) {
     res.json({status: false, error: 'API only accept JSON.'})
     return
   }
+  next()
+})
+
+// =======================
+// PMX Stats =============
+// =======================
+var probe = pmx.probe()
+// The counter will start at 0
+var counter = probe.counter({
+  name: 'Current req processed'
+})
+
+app.use(function (req, res, next) {
+  counter.inc()
+  req.on('end', function () {
+    counter.dec()
+  })
   next()
 })
 
@@ -98,8 +116,6 @@ app.use(function (err, req, res, next) {
 // =======================
 // PMX ================
 // =======================
-var probe = pmx.probe()
-
 var meter = probe.meter({
   name: 'req/min',
   samples: 1,
