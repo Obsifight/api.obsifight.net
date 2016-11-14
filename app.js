@@ -42,7 +42,7 @@ var counter = probe.counter({
 
 app.use(function (req, res, next) {
   req.on('end', function () {
-    counter.inc()
+    counter.dec()
   })
   next()
 })
@@ -126,5 +126,6 @@ var meter = probe.meter({
 // =======================
 app.listen(config.port, function () {
   meter.mark()
+  counter.inc()
   console.log('App listen on port ' + config.port)
 })
