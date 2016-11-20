@@ -58,6 +58,18 @@ var config = require('./app/config/global')
 // =======================
 // routes ================
 // =======================
+
+// index
+app.get('/', function (req, res) {
+  return res.json({
+    name: 'obsiapi',
+    version: require('fs').readFileSync('./VERSION').toString().trim(),
+    author: 'Eywek',
+    environement: (app.get('env') === 'production') ? 'production' : 'development'
+  })
+})
+
+// configured
 var routes = require('./app/config/routes')
 for (var route in routes) {
   // get method
