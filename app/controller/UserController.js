@@ -11,7 +11,18 @@ module.exports = {
       res.json({
         status: true,
         data: {
-          ids: ids
+          ids: ids,
+          uuid: '',
+          registerDate: '',
+          lastConnection: {
+            ip: '',
+            mac: '',
+            date: ''
+          },
+          adresses: {
+            mac: [],
+            ip: []
+          }
         }
       })
     })
