@@ -1,9 +1,19 @@
 {
-  "apps" : [{
-    "name": "api.obsifight.net",
-    "script": "./app.js",
-    "exec_interpreter": "node",
-    "exec_mode": "cluster",
-    "instances": 1
-  }]
+  "apps" : [
+    {
+      "name": "api.obsifight.net",
+      "script": "./app.js",
+      "exec_interpreter": "node",
+      "exec_mode": "cluster",
+      "instances": 1,
+      "env": {
+        "PORT": 8080,
+        "NODE_ENV": "development"
+      },
+      "env_production": {
+        "PORT": 80,
+        "NODE_ENV": "production"
+      }
+    }
+  ]
 }

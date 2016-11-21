@@ -65,7 +65,7 @@ app.get('/', function (req, res) {
     name: 'obsiapi',
     version: require('fs').readFileSync('./VERSION').toString().trim(),
     author: 'Eywek',
-    environement: (app.get('env') === 'production') ? 'production' : 'development'
+    environement: (process.env.NODE_ENV === 'production') ? 'production' : 'development'
   })
 })
 
