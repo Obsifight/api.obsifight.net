@@ -65,7 +65,7 @@ module.exports = {
   },
 
   getAuthLogs: function (id, next) {
-    db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `data` AS `data`, `mac_adress` AS `mac_adress` FROM `loginlogs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
+    db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `date` AS `date`, `mac_adress` AS `mac_adress` FROM `loginlogs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       return next(undefined, rows)
