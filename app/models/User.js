@@ -57,7 +57,7 @@ module.exports = {
   },
 
   getAuthInfos: function (id, next) {
-    db.get('auth').query("SELECT `profileid` AS `uuid`, `user_pseudo` AS `username`, `authorised_ip` AS `authorised_ip`, `dynamic_ip` AS `dynamic_ip`, `has_connected_to_v5` AS `has_connected_to_v5`, `is_register_v5` AS `is_register_v5`, `mac_adress` AS `mac_adress` FROM `joueurs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
+    db.get('auth').query("SELECT `profileid` AS `uuid`, `user_pseudo` AS `username`, `authorised_ip` AS `authorised_ip`, `dynamic_ip` AS `dynamic_ip`, `has_connected_v5` AS `has_connected_v5`, `is_register_v5` AS `is_register_v5`, `mac_adress` AS `mac_adress` FROM `joueurs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
       return next(undefined, rows[0])
@@ -65,15 +65,15 @@ module.exports = {
   },
 
   getAuthLogs: function (id, next) {
-    db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `data` AS `data`, `mac_adress` AS `mac_adress` FROM `loginlogs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
+    db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `date` AS `date`, `mac_adress` AS `mac_adress` FROM `loginlogs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
-      if (rows === undefined || rows[0] === undefined) return next(new Error("User's log not found"))
-      return next(undefined, rows[0])
+      if (rows === undefined || rows.length === 0) return next(undefined, [])
+      return next(undefined, rows)
     })
   },
 
   getWebsiteInfos: function (id, next) {
-    db.get('web_v5').query("SELECT `id` AS `id`, `pseudo` AS `username`, `email` AS `email`, `money` AS `money`, `ip` AS `register_ip`, `skin` AS `has_purchased_skin`, `cape` AS `has_purchased_cape`, `created` AS `register_date`, `skin_uploaded` AS `obsi-skin_uploaded`, `cape_uploaded` AS `obsi-cape_uploaded`, `obsiguard_enabled` AS `obsi-obsiguard_enabled` FROM `users` WHERE `id` = ? LIMIT 1", [id], function (err, rows, fields) {
+    db.get('web_v5').query("SELECT `id` AS `id`, `pseudo` AS `username`, `email` AS `email`, `money` AS `money`, `ip` AS `register_ip`, `skin` AS `has_purchased_skin`, `cape` AS `has_purchased_cape`, `created` AS `register_date`, `obsi-skin_uploaded` AS `skin_uploaded`, `obsi-cape_uploaded` AS `cape_uploaded`, `obsi-obsiguard_enabled` AS `obsiguard_enabled` FROM `users` WHERE `id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
       return next(undefined, rows[0])
@@ -83,8 +83,8 @@ module.exports = {
   getUsernameUpdateLogs: function (id, next) {
     db.get('web_v5').query("SELECT `id` AS `id`, `user_id` AS `user_id`, `old_pseudo` AS `old_username`, `new_pseudo` AS `new_username`, `created` AS `update_date` FROM `obsi__pseudo_update_histories` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
-      if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
-      return next(undefined, rows[0])
+      if (rows === undefined || rows.length === 0) return next(undefined, [])
+      return next(undefined, rows)
     })
   }
 
