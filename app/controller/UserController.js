@@ -33,7 +33,25 @@ module.exports = {
             })
             return callback(undefined, formattedData)
           })
-        }
+        },
+
+        // get register date
+        function (callback) {
+          User.getWebsiteInfos(ids.web, callback)
+        },
+
+        // get username update logs
+        function (callback) {
+          User.getUsernameUpdateLogs(ids.web, function (err, rows) {
+            if (err) return callback(err)
+
+            // formatting
+            var formattedData = _.each(rows, function (element, index) { // rows is an array with logs
+              return element.old_username
+            })
+            return callback(undefined, formattedData)
+          })
+        },
 
       ], function (err, results) {
         if (err) {
@@ -46,8 +64,12 @@ module.exports = {
           status: true,
           data: {
             ids: ids,
+            usernames: {
+              histories : results[3],
+              current: results[2].username
+            },
             uuid: results[0].uuid,
-            registerDate: '',
+            registerDate: results[2].register_date,
             lastConnection: results[1], // launcher's logs
             adresses: {
               mac: _.groupBy(results[1], 'mac_adress'),
