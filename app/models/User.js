@@ -73,7 +73,7 @@ module.exports = {
   },
 
   getWebsiteInfos: function (id, next) {
-    db.get('web_v5').query("SELECT `id` AS `id`, `pseudo` AS `username`, `email` AS `email`, `money` AS `money`, `ip` AS `register_ip`, `skin` AS `has_purchased_skin`, `cape` AS `has_purchased_cape`, `created` AS `register_date`, `skin_uploaded` AS `obsi-skin_uploaded`, `cape_uploaded` AS `obsi-cape_uploaded`, `obsiguard_enabled` AS `obsi-obsiguard_enabled` FROM `users` WHERE `id` = ? LIMIT 1", [id], function (err, rows, fields) {
+    db.get('web_v5').query("SELECT `id` AS `id`, `pseudo` AS `username`, `email` AS `email`, `money` AS `money`, `ip` AS `register_ip`, `skin` AS `has_purchased_skin`, `cape` AS `has_purchased_cape`, `created` AS `register_date`, `obsi-skin_uploaded` AS `skin_uploaded`, `obsi-cape_uploaded` AS `cape_uploaded`, `obsi-obsiguard_enabled` AS `obsiguard_enabled` FROM `users` WHERE `id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
       return next(undefined, rows[0])
