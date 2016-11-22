@@ -65,10 +65,17 @@ module.exports = {
   },
 
   getAuthLogs: function (id, next) {
-    db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `date` AS `date`, `mac_adress` AS `mac_adress` FROM `loginlogs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
+    // find id
+    db.get('auth').query("SELECT `user_pseudo` AS `username` FROM `joueurs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
-      if (rows === undefined || rows.length === 0) return next(undefined, [])
-      return next(undefined, rows)
+      if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
+
+      // find logs with username
+      db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `date` AS `date`, `mac_adress` AS `mac_adress` FROM `loginlogs` WHERE `username` = ? LIMIT 1", [rows[0].username], function (err, rows, fields) {
+        if (err) return next(err)
+        if (rows === undefined || rows.length === 0) return next(undefined, [])
+        return next(undefined, rows)
+      })
     })
   },
 
