@@ -1,3 +1,6 @@
+var async = require('async')
+var _ = require('underscore')
+
 module.exports = {
 
   get: function (req, res) {
@@ -8,22 +11,50 @@ module.exports = {
     User.getIds(req.params.username, function (err, ids) {
       if (err || ids.web === 0) return res.status(404).json({status: false, error: 'User not found.'})
 
-      res.json({
-        status: true,
-        data: {
-          ids: ids,
-          uuid: '',
-          registerDate: '',
-          lastConnection: {
-            ip: '',
-            mac: '',
-            date: ''
-          },
-          adresses: {
-            mac: [],
-            ip: []
-          }
+      async.parallel([
+
+        // get uuid
+        function (callback) {
+          User.getAuthInfos(ids.auth, callback)
+        },
+
+        // get launcher logs
+        function (callback) {
+          User.getAuthLogs(ids.auth, function (err, rows) {
+            if (err) return callback(err)
+
+            // formatting
+            var formattedData = _.each(rows, function (element, index) { // rows is an array with logs
+              return {
+                ip: element.ip,
+                mac: element.mac_adress,
+                date: element.date
+              }
+            })
+            return callback(undefined, formattedData)
+          })
         }
+
+      ], function (err, results) {
+        if (err) {
+          console.log(err)
+          return res.status(500).json({status: false, error: 'Internal error.'})
+        }
+
+        // render to user
+        res.json({
+          status: true,
+          data: {
+            ids: ids,
+            uuid: results[0].uuid,
+            registerDate: '',
+            lastConnection: results[1], // launcher's logs
+            adresses: {
+              mac: _.groupBy(results[1], 'mac_adress'),
+              ip: _.groupBy(results[1], 'ip')
+            }
+          }
+        })
       })
     })
   }
