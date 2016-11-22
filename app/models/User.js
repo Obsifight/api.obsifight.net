@@ -67,8 +67,8 @@ module.exports = {
   getAuthLogs: function (id, next) {
     db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `data` AS `data`, `mac_adress` AS `mac_adress` FROM `loginlogs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
-      if (rows === undefined || rows[0] === undefined) return next(new Error("User's log not found"))
-      return next(undefined, rows[0])
+      if (rows === undefined || rows.length === 0) return next(undefined, [])
+      return next(undefined, rows)
     })
   },
 
@@ -83,8 +83,8 @@ module.exports = {
   getUsernameUpdateLogs: function (id, next) {
     db.get('web_v5').query("SELECT `id` AS `id`, `user_id` AS `user_id`, `old_pseudo` AS `old_username`, `new_pseudo` AS `new_username`, `created` AS `update_date` FROM `obsi__pseudo_update_histories` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
-      if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
-      return next(undefined, rows[0])
+      if (rows === undefined || rows.length === 0) return next(undefined, [])
+      return next(undefined, rows)
     })
   }
 
