@@ -100,34 +100,43 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Missing user\'s name.'})
 
     // find user
-    db.get('web_v5').query("SELECT `created` AS `last_vote_date` FROM obsivote__votes WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
-      // error
+    db.get('web_v5').query("SELECT `id` AS `id` FROM users WHERE `username` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
       }
-      // user hasn't vote yet
-      if (rows === undefined || rows.length === 0)
-        return res.json({status: true, success: "User hasn't vote yet!"})
-
-      // get configuration
-      db.get('web_v5').query("SELECT `time_vote` AS `vote_cooldown` FROM obsivote__configurations WHERE 1 LIMIT 1", function (err, rows, fields) {
+      if (rows === undefined || rows[0] === undefined)
+        return res.status(404).json({status: false, error: 'User not found.'})
+      // find user's vote
+      db.get('web_v5').query("SELECT `created` AS `last_vote_date` FROM obsivote__votes WHERE `user_id` = ? LIMIT 1", [rows[0].id], function (err, rows, fields) {
         // error
         if (err) {
           console.error(err)
           return res.status(500).json({status: false, error: 'Internal error.'})
         }
-        // not config
+        // user hasn't vote yet
         if (rows === undefined || rows.length === 0)
-          return res.json({status: true, success: "Admin hasn't config vote yet!"})
-        // check if cooldown (minutes) was passed
-        var now = (new Date).now()
-        var cooldown_time = rows[0].vote_cooldown * 60 * 1000 // minutes to miliseconds
-        cooldown_time = now + cooldown_time
-        if (now > cooldown_time)
-          return res.json({status: true, success: "User can vote!"})
-        else
-          return res.json({status: false, success: "User can't vote!"})
+          return res.json({status: true, success: "User hasn't vote yet!"})
+
+        // get configuration
+        db.get('web_v5').query("SELECT `time_vote` AS `vote_cooldown` FROM obsivote__configurations WHERE 1 LIMIT 1", function (err, rows, fields) {
+          // error
+          if (err) {
+            console.error(err)
+            return res.status(500).json({status: false, error: 'Internal error.'})
+          }
+          // not config
+          if (rows === undefined || rows.length === 0)
+            return res.json({status: true, success: "Admin hasn't config vote yet!"})
+          // check if cooldown (minutes) was passed
+          var now = (new Date).now()
+          var cooldown_time = rows[0].vote_cooldown * 60 * 1000 // minutes to miliseconds
+          cooldown_time = now + cooldown_time
+          if (now > cooldown_time)
+            return res.json({status: true, success: "User can vote!"})
+          else
+            return res.json({status: false, success: "User can't vote!"})
+        })
       })
     })
   }
