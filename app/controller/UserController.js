@@ -70,10 +70,10 @@ module.exports = {
             },
             uuid: results[0].uuid,
             registerDate: results[2].register_date,
-            lastConnection: results[1], // launcher's logs
+            lastConnection: results[1][0], // launcher's logs
             adresses: {
-              mac: _.groupBy(results[1], 'mac_adress'),
-              ip: _.groupBy(results[1], 'ip')
+              mac: Object.keys(_.groupBy(results[1], 'mac_adress')),
+              ip: Object.keys(_.groupBy(results[1], 'ip'))
             }
           }
         })
