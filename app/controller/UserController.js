@@ -129,7 +129,7 @@ module.exports = {
           if (rows === undefined || rows.length === 0)
             return res.json({status: true, success: "Admin hasn't config vote yet!"})
           // check if cooldown (minutes) was passed
-          var now = (new Date).now()
+          var now = (new Date()).now()
           var cooldown_time = rows[0].vote_cooldown * 60 * 1000 // minutes to miliseconds
           cooldown_time = now + cooldown_time
           if (now > cooldown_time)
