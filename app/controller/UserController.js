@@ -100,7 +100,7 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Missing user\'s name.'})
 
     // find user
-    db.get('web_v5').query("SELECT `id` AS `id` FROM users WHERE `username` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
+    db.get('web_v5').query("SELECT `id` AS `id` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
