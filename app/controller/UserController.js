@@ -1,6 +1,20 @@
 var async = require('async')
 var _ = require('underscore')
 
+Array.prototype.remove = function () {
+  var what
+  var a = arguments
+  var L = a.length
+  var ax
+  while (L && this.length) {
+    what = a[--L]
+    while ((ax = this.indexOf(what)) !== -1) {
+      this.splice(ax, 1)
+    }
+  }
+  return this
+}
+
 module.exports = {
 
   get: function (req, res) {
@@ -72,11 +86,48 @@ module.exports = {
             registerDate: results[2].register_date,
             lastConnection: results[1][0], // launcher's logs
             adresses: {
-              mac: Object.keys(_.groupBy(results[1], 'mac_adress')),
-              ip: Object.keys(_.groupBy(results[1], 'ip'))
+              mac: Object.keys(_.groupBy(results[1], 'mac_adress')).remove('null'),
+              ip: Object.keys(_.groupBy(results[1], 'ip')).remove('null')
             }
           }
         })
+      })
+    })
+  },
+
+  canVote: function (req, res) {
+    if (req.params.username === undefined)
+      return res.status(400).json({status: false, error: 'Missing user\'s name.'})
+
+    // find user
+    db.get('web_v5').query("SELECT `created` AS `last_vote_date` FROM obsivote__votes WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
+      // error
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      // user hasn't vote yet
+      if (rows === undefined || rows.length === 0)
+        return res.json({status: true, success: "User hasn't vote yet!"})
+
+      // get configuration
+      db.get('web_v5').query("SELECT `time_vote` AS `vote_cooldown` FROM obsivote__configurations WHERE 1 LIMIT 1", function (err, rows, fields) {
+        // error
+        if (err) {
+          console.error(err)
+          return res.status(500).json({status: false, error: 'Internal error.'})
+        }
+        // not config
+        if (rows === undefined || rows.length === 0)
+          return res.json({status: true, success: "Admin hasn't config vote yet!"})
+        // check if cooldown (minutes) was passed
+        var now = (new Date).now()
+        var cooldown_time = rows[0].vote_cooldown * 60 * 1000 // minutes to miliseconds
+        cooldown_time = now + cooldown_time
+        if (now > cooldown_time)
+          return res.json({status: true, success: "User can vote!"})
+        else
+          return res.json({status: false, success: "User can't vote!"})
       })
     })
   }
