@@ -26,6 +26,7 @@ module.exports = {
           reason: ban.reason,
           ban: ban.server,
           date: ban.date,
+          staff: (ban.staff_username != null) ? {username: ban.staff_username} : null,
           end_date: ban.end_date,
           state: ban.state,
           duration: (ban.end_date == null) ? 'PERMANENT' : ((ban.end_date - ban.date) / 1000), // return time in minutes or PERMANENT
