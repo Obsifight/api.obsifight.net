@@ -13,11 +13,27 @@ module.exports = {
     // web
     if (username == parseInt(username)) { // is an id
       db.get('web_v5').query("SELECT `pseudo` FROM users WHERE `id` = ? LIMIT 1", [username], function (err, rows, fields) {
-        if (err) return callback(err)
+        if (err) return next(err)
         queries(rows[0].pseudo)
       })
     } else {
-      queries(username)
+      checkIfNotAndOldUsername(username)
+    }
+
+    function checkIfNotAndOldUsername(username) {
+      // find if username wasn't an old username
+      db.get('web_v5').query("SELECT `user_id` AS `user_id` FROM `obsi__pseudo_update_histories` WHERE `old_pseudo` = ? LIMIT 1", [username], function (err, rows, fields) {
+        if (err) return next(err)
+        if (rows === undefined || rows.length === 0)
+          return queries(username)
+
+        // old username, so get new username with this id
+        db.get('web_v5').query("SELECT `pseudo` AS `username` FROM users WHERE `id` = ? LIMIT 1", [rows[0].user_id], function (err, rows, fields) {
+          if (err) return next(err)
+          if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
+          return queries(rows[0].username)
+        })
+      })
     }
 
     function queries (username) {
