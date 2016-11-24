@@ -16,7 +16,7 @@ module.exports = {
         return res.status(404).json({status: false, error: 'No bans found.'})
 
       // init response var (after formatting)
-      var bans = {}
+      var bans = []
 
       // formatting
       async.each(rows, function (ban, callback) { // for each bans
@@ -56,7 +56,7 @@ module.exports = {
         }
 
         // push result
-        function push() {
+        function push () {
           bans.push(formattedData)
           callback()
         }
