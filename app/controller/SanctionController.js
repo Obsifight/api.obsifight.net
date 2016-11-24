@@ -7,7 +7,7 @@ module.exports = {
     if (req.query !== undefined && req.query.limit !== undefined)
       limit = parseInt(req.query.limit)
 
-    db.get('sanctions').query("SELECT `ban_id` AS `id`, `UUID` AS `uuid`, `ban_ip` AS `banned_ip`, `ban_staff` AS `staff_username`, `ban_reason` AS `reason`, `ban_server` AS `server`, `ban_begin` AS `date`, `ban_end` AS `end_date`, `ban_state` AS `state`, `ban_unbandate` AS `remove_date`, `ban_unbanstaff` AS `remove_staff` FROM BAT_ban WHERE 1 ORDER BY `id` DESC LIMIT ?", [limit], function (err, rows, fields) {
+    db.get('sanctions').query("SELECT `ban_id` AS `id`, `UUID` AS `uuid`, `ban_ip` AS `banned_ip`, `ban_staff` AS `staff_username`, `ban_reason` AS `reason`, `ban_server` AS `server`, `ban_begin` AS `date`, `ban_end` AS `end_date`, `ban_state` AS `state`, `ban_unbandate` AS `remove_date`, `ban_unbanstaff` AS `remove_staff`, `ban_unbanreason` AS `remove_reason` FROM BAT_ban WHERE 1 ORDER BY `id` DESC LIMIT ?", [limit], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
@@ -31,7 +31,8 @@ module.exports = {
           state: ban.state,
           duration: (ban.end_date == null) ? 'PERMANENT' : ((ban.end_date - ban.date) / 1000), // return time in minutes or PERMANENT
           remove_date: ban.remove_date,
-          remove_staff: (ban.remove_staff != null) ? {username: ban.remove_staff} : null
+          remove_staff: (ban.remove_staff != null) ? {username: ban.remove_staff} : null,
+          remove_reason: ban.remove_reason
         }
 
         // type of ban
