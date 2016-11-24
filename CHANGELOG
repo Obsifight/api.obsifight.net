@@ -1,2 +1,6 @@
+1.0.0-alpha.0.1
+- Add GET /sanction/bans
+- Handle old username for GET /user/<username>
+
 1.0.0-alpha
 - First release
