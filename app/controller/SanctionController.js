@@ -40,7 +40,7 @@ module.exports = {
           }
           formattedData.ban_type = 'user'
           // get username of user
-          db.get('sanctions').query("SELECT `BAT_player` AS `username` FROM BAT_ban WHERE `UUID` = ? LIMIT 1", [ban.uuid], function (err, rows, fields) {
+          db.get('sanctions').query("SELECT `BAT_player` AS `username` FROM BAT_players WHERE `UUID` = ? LIMIT 1", [ban.uuid], function (err, rows, fields) {
             if (err) {
               console.error(err)
               return res.status(500).json({status: false, error: 'Internal error.'})
