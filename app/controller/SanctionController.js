@@ -75,8 +75,8 @@ module.exports = {
   },
 
   editBan: function (req, res) {
-    if (req.params.id === undefined)
-      return res.status(400).json({status: false, error: 'Missing ban\'s id.'})
+    if (req.params.id === undefined || parseInt(req.params.id) != req.params.id)
+      return res.status(400).json({status: false, error: 'Missing ban\'s id or invalid id.'})
     // check body
     if (req.body.end_date === undefined && req.body.remove_reason === undefined)
       return res.status(400).json({status: false, error: 'Missing ban\'s `end_date` or `remove_reason`.'})
