@@ -145,7 +145,7 @@ module.exports = {
     }
     if (req.body.type !== 'user' && req.body.type !== 'ip')
       return res.status(400).json({status: false, error: 'Missing params `type` or invalid.'})
-    if (req.body.type === 'user' && (req.body.user === undefined || req.body.user.uuid === undefined || req.body.user.username === undefined))
+    if (req.body.type === 'user' && req.body.user === undefined && (req.body.user.uuid === undefined || req.body.user.username === undefined))
       return res.status(400).json({status: false, error: 'Missing params `user.uuid` or `user.username`.'})
     if (req.body.type === 'ip' && req.body.ip === undefined)
       return res.status(400).json({status: false, error: 'Missing params `ip`.'})
