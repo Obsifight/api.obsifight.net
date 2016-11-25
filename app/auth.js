@@ -8,7 +8,11 @@ module.exports = function (req, res, next) {
   jwt.verify(req.headers.authorization, 'xEVKGwYJVrpQDXqVULHesLkZLW6PvQa6BRAZxfgb', function (err, decoded) {
     if (err || decoded === undefined || decoded.id === undefined || decoded.ip !== req.connection.remoteAddress)
       return res.status(401).json({status: false, error: 'Not authorized.'})
-    req.api.user.id = decoded.id
+    req.api = {
+      user: {
+        id = decoded.id
+      }
+    }
     next()
 
     // add into history
