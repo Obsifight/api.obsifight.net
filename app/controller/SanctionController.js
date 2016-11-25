@@ -68,7 +68,9 @@ module.exports = {
         return res.json({
           status: true,
           data: {
-            bans: _.sortBy(bans, 'id')
+            bans: _.sortBy(bans, function (num) {
+              return -num
+            })
           }
         })
       })
