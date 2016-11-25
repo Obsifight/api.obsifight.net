@@ -72,6 +72,63 @@ module.exports = {
         })
       })
     })
+  },
+
+  editBan: function (req, res) {
+    if (req.params.id === undefined)
+      return res.status(400).json({status: false, error: 'Missing ban\'s id.'})
+    // check body
+    if (req.body.end_date === undefined || req.body.remove_reason === undefined)
+      return res.status(400).json({status: false, error: 'Missing ban\'s `end_date` or `remove_reason`.'})
+    if (req.body.end_date !== undefined && new Date(req.body.end_date) === 'Invalid Date') // invalid end date specified
+      return res.status(400).json({status: false, error: 'Invalid ban\'s `end_date`.'})
+    if (req.body.end_date !== undefined && new Date(req.body.end_date).getTime() <= Date.now()) // user try to edit end_date for unban user
+      return res.status(400).json({status: false, error: 'Invalid ban\'s `end_date`. You\'ve try to set `end_date` inferior or equal of now.'})
+
+    // find ban
+    db.get('sanctions').query("SELECT `ban_id` AS `id` FROM BAT_ban WHERE `id` = ? LIMIT 1", [req.params.id], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      // unknown ban with this id
+      if (rows === undefined || rows[0] === undefined)
+        return res.status(404).json({status: false, error: 'Ban not found.'})
+
+      if (req.body.end_date !== undefined) { // edit ban end date
+        db.get('sanctions').query("UPDATE BAT_ban SET `ban_end` = ? WHERE `id` = ? LIMIT 1", [new Date(req.body.end_date), req.params.id], function (err, rows, fields) {
+          if (err) {
+            console.error(err)
+            return res.status(500).json({status: false, error: 'Internal error when edit ban.'})
+          }
+          render()
+        })
+      } else if (req.body.remove_reason !== undefined) { // unban user
+        // find current api user with req.api.user.id
+        db.get('api').query("SELECT `username` AS `username` FROM api_users WHERE `id` = ? LIMIT 1", [req.api.user.id], function (err, rows, fields) {
+          if (err || rows === undefined || rows.length === 0) {
+            console.error(err || new Error('Api user not found.'))
+            return res.status(500).json({status: false, error: 'Internal error when find current api user.'})
+          }
+          db.get('sanctions').query("UPDATE BAT_ban SET `ban_state` = 0, `ban_unbandate` = ?, `ban_unbanstaff` = ?, `ban_unbanreason` = ? WHERE `id` = ? LIMIT 1", [Date.now(), rows[0].username, req.body.remove_reason, req.params.id], function (err, rows, fields) {
+            if (err) {
+              console.error(err)
+              return res.status(500).json({status: false, error: 'Internal error when edit ban.'})
+            }
+            render()
+          })
+        })
+      } else {
+        return res.status(400).json({status: false, error: 'Missing params.'})
+      }
+
+      function render () {
+        res.json({
+          status: true,
+          success: 'Ban has been successfuly edited!'
+        })
+      }
+    })
   }
 
 }

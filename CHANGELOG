@@ -1,3 +1,7 @@
+1.0.0-alpha.0.2
+- Add PUT /sanction/bans/<id>
+- Set req.api.user.id on auth.js
+
 1.0.0-alpha.0.1
 - Add GET /sanction/bans
 - Handle old username for GET /user/<username>
