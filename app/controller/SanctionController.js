@@ -89,7 +89,7 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Invalid ban\'s `end_date`. You\'ve try to set `end_date` inferior or equal of now.'})
 
     // find ban
-    db.get('sanctions').query("SELECT `ban_id` AS `id` FROM BAT_ban WHERE `ban_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
+    db.get('sanctions').query("SELECT `ban_id` AS `id`, `ban_state` AS `state` FROM BAT_ban WHERE `ban_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
@@ -97,6 +97,8 @@ module.exports = {
       // unknown ban with this id
       if (rows === undefined || rows[0] === undefined)
         return res.status(404).json({status: false, error: 'Ban not found.'})
+      if (rows === undefined || rows[0].state == 0)
+        return res.status(404).json({status: false, error: 'Ban already expired.'})
 
       if (req.body.end_date !== undefined) { // edit ban end date
         db.get('sanctions').query("UPDATE BAT_ban SET `ban_end` = ? WHERE `ban_id` = ? LIMIT 1", [new Date(req.body.end_date), parseInt(req.params.id)], function (err, rows, fields) {
@@ -113,7 +115,7 @@ module.exports = {
             console.error(err || new Error('Api user not found.'))
             return res.status(500).json({status: false, error: 'Internal error when find current api user.'})
           }
-          db.get('sanctions').query("UPDATE BAT_ban SET `ban_state` = 0, `ban_unbandate` = ?, `ban_unbanstaff` = ?, `ban_unbanreason` = ? WHERE `ban_id` = ? LIMIT 1", [Date.now(), rows[0].username, req.body.remove_reason, parseInt(req.params.id)], function (err, rows, fields) {
+          db.get('sanctions').query("UPDATE BAT_ban SET `ban_state` = 0, `ban_unbandate` = ?, `ban_unbanstaff` = ?, `ban_unbanreason` = ? WHERE `ban_id` = ? LIMIT 1", [(new Date()), rows[0].username, req.body.remove_reason, parseInt(req.params.id)], function (err, rows, fields) {
             if (err) {
               console.error(err)
               return res.status(500).json({status: false, error: 'Internal error when edit ban.'})
