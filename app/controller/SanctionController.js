@@ -89,7 +89,7 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Invalid ban\'s `end_date`. You\'ve try to set `end_date` inferior or equal of now.'})
 
     // find ban
-    db.get('sanctions').query("SELECT `ban_id` AS `id` FROM BAT_ban WHERE `ban_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
+    db.get('sanctions').query("SELECT `ban_id` AS `id`, `ban_state` AS `state` FROM BAT_ban WHERE `ban_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
