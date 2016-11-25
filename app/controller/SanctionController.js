@@ -80,7 +80,7 @@ module.exports = {
     // check body
     if (req.body.end_date === undefined && req.body.remove_reason === undefined)
       return res.status(400).json({status: false, error: 'Missing ban\'s `end_date` or `remove_reason`.'})
-    if (req.body.end_date !== undefined && new Date(req.body.end_date) === 'Invalid Date') // invalid end date specified
+    if (req.body.end_date !== undefined && new Date(req.body.end_date) == 'Invalid Date') // invalid end date specified
       return res.status(400).json({status: false, error: 'Invalid ban\'s `end_date`.'})
     if (req.body.end_date !== undefined && new Date(req.body.end_date).getTime() <= Date.now()) // user try to edit end_date for unban user
       return res.status(400).json({status: false, error: 'Invalid ban\'s `end_date`. You\'ve try to set `end_date` inferior or equal of now.'})
