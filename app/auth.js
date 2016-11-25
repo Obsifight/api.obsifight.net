@@ -10,7 +10,7 @@ module.exports = function (req, res, next) {
       return res.status(401).json({status: false, error: 'Not authorized.'})
     req.api = {
       user: {
-        id = decoded.id
+        id: decoded.id
       }
     }
     next()
