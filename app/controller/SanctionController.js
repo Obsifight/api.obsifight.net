@@ -78,7 +78,7 @@ module.exports = {
     if (req.params.id === undefined)
       return res.status(400).json({status: false, error: 'Missing ban\'s id.'})
     // check body
-    if (req.body.end_date === undefined || req.body.remove_reason === undefined)
+    if (req.body.end_date === undefined && req.body.remove_reason === undefined)
       return res.status(400).json({status: false, error: 'Missing ban\'s `end_date` or `remove_reason`.'})
     if (req.body.end_date !== undefined && new Date(req.body.end_date) === 'Invalid Date') // invalid end date specified
       return res.status(400).json({status: false, error: 'Invalid ban\'s `end_date`.'})
@@ -86,7 +86,7 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Invalid ban\'s `end_date`. You\'ve try to set `end_date` inferior or equal of now.'})
 
     // find ban
-    db.get('sanctions').query("SELECT `ban_id` AS `id` FROM BAT_ban WHERE `id` = ? LIMIT 1", [req.params.id], function (err, rows, fields) {
+    db.get('sanctions').query("SELECT `ban_id` AS `id` FROM BAT_ban WHERE `ban_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
@@ -96,7 +96,7 @@ module.exports = {
         return res.status(404).json({status: false, error: 'Ban not found.'})
 
       if (req.body.end_date !== undefined) { // edit ban end date
-        db.get('sanctions').query("UPDATE BAT_ban SET `ban_end` = ? WHERE `id` = ? LIMIT 1", [new Date(req.body.end_date), req.params.id], function (err, rows, fields) {
+        db.get('sanctions').query("UPDATE BAT_ban SET `ban_end` = ? WHERE `id` = ? LIMIT 1", [new Date(req.body.end_date), parseInt(req.params.id)], function (err, rows, fields) {
           if (err) {
             console.error(err)
             return res.status(500).json({status: false, error: 'Internal error when edit ban.'})
@@ -110,7 +110,7 @@ module.exports = {
             console.error(err || new Error('Api user not found.'))
             return res.status(500).json({status: false, error: 'Internal error when find current api user.'})
           }
-          db.get('sanctions').query("UPDATE BAT_ban SET `ban_state` = 0, `ban_unbandate` = ?, `ban_unbanstaff` = ?, `ban_unbanreason` = ? WHERE `id` = ? LIMIT 1", [Date.now(), rows[0].username, req.body.remove_reason, req.params.id], function (err, rows, fields) {
+          db.get('sanctions').query("UPDATE BAT_ban SET `ban_state` = 0, `ban_unbandate` = ?, `ban_unbanstaff` = ?, `ban_unbanreason` = ? WHERE `id` = ? LIMIT 1", [Date.now(), rows[0].username, req.body.remove_reason, parseInt(req.params.id)], function (err, rows, fields) {
             if (err) {
               console.error(err)
               return res.status(500).json({status: false, error: 'Internal error when edit ban.'})
