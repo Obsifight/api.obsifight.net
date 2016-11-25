@@ -174,7 +174,7 @@ module.exports = {
           return res.status(500).json({status: false, error: 'Internal error when find current api user.'})
         }
         // after get api_user's username
-        db.get('sanctions').query("INSERT INTO BAT_ban SET `UUID` = ?, `ban_ip` = ?, `ban_staff` = ?, `ban_reason` = ?, `ban_server` = ?, `ban_begin` = ?, `ban_state` = 1", [
+        db.get('sanctions').query("INSERT INTO BAT_ban SET `UUID` = ?, `ban_ip` = ?, `ban_staff` = ?, `ban_reason` = ?, `ban_server` = ?, `ban_begin` = ?", [
           (req.body.type === 'user' ? uuid : null),
           (req.body.type === 'ip' ? req.body.ip : null),
           rows[0].username,
