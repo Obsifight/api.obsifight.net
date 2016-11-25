@@ -8,11 +8,15 @@ module.exports = function (req, res, next) {
   jwt.verify(req.headers.authorization, 'xEVKGwYJVrpQDXqVULHesLkZLW6PvQa6BRAZxfgb', function (err, decoded) {
     if (err || decoded === undefined || decoded.id === undefined || decoded.ip !== req.connection.remoteAddress)
       return res.status(401).json({status: false, error: 'Not authorized.'})
-
+    req.api = {
+      user: {
+        id: parseInt(decoded.id)
+      }
+    }
     next()
 
     // add into history
-    db.get('api').query("INSERT INTO api_histories SET `user_id` = ?, `action` = ?, `body` = ?, `accessToken` = ?, `createdAt` = ?", [decoded.id, req.method+' '+req.originalUrl, JSON.stringify(req.body), req.headers.authorization, (new Date)], function (err, rows, fields) {
+    db.get('api').query("INSERT INTO api_histories SET `user_id` = ?, `action` = ?, `body` = ?, `accessToken` = ?, `createdAt` = ?", [parseInt(decoded.id), req.method+' '+req.originalUrl, JSON.stringify(req.body), req.headers.authorization, (new Date)], function (err, rows, fields) {
       if (err) console.error(err)
     })
   })
