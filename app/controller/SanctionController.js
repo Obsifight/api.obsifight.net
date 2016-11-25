@@ -149,6 +149,8 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Missing params `user.uuid` or `user.username`.'})
     if (req.body.type === 'ip' && req.body.ip === undefined)
       return res.status(400).json({status: false, error: 'Missing params `ip`.'})
+    if (req.body.end_date !== undefined && new Date(req.body.end_date) == 'Invalid Date') // invalid end date specified
+      return res.status(400).json({status: false, error: 'Invalid ban\'s `end_date`.'})
 
     // set user uuid if type is user and username is defined
     if (req.body.type === 'user' && req.body.user.uuid === undefined)
@@ -174,13 +176,14 @@ module.exports = {
           return res.status(500).json({status: false, error: 'Internal error when find current api user.'})
         }
         // after get api_user's username
-        db.get('sanctions').query("INSERT INTO BAT_ban SET `UUID` = ?, `ban_ip` = ?, `ban_staff` = ?, `ban_reason` = ?, `ban_server` = ?, `ban_begin` = ?", [
+        db.get('sanctions').query("INSERT INTO BAT_ban SET `UUID` = ?, `ban_ip` = ?, `ban_staff` = ?, `ban_reason` = ?, `ban_server` = ?, `ban_begin` = ?, `ban_end` = ?", [
           (req.body.type === 'user' ? uuid : null),
           (req.body.type === 'ip' ? req.body.ip : null),
           rows[0].username,
           req.body.reason,
           req.body.server,
-          (new Date())
+          (new Date()),
+          (req.body.end_date || null)
         ], function (err, rows, fields) {
           if (err) {
             console.error(err)
