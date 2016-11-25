@@ -178,6 +178,7 @@ module.exports = {
           (req.body.type === 'user' ? uuid : null),
           (req.body.type === 'ip' ? req.body.ip : null),
           rows[0].username,
+          req.body.reason,
           req.body.server,
           (new Date())
         ], function (err, rows, fields) {
