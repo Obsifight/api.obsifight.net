@@ -25,7 +25,7 @@ module.exports = {
         var formattedData = {
           id: ban.id,
           reason: ban.reason,
-          ban: ban.server,
+          server: ban.server,
           date: ban.date,
           staff: (ban.staff_username != null) ? {username: ban.staff_username} : null,
           end_date: ban.end_date,
@@ -134,6 +134,64 @@ module.exports = {
         })
       }
     })
+  },
+
+  addBan: function (req, res) {
+    // Check args
+    var args = ['reason', 'server', 'type']
+    for (var i = 0; i < args.length; i++) {
+      if (req.body[args[i]] === undefined || req.body[args[i]].length === 0)
+        return res.status(400).json({status: false, error: 'Missing params `' + args[i] + '`.'})
+    }
+    if (req.body.type !== 'user' && req.body.type !== 'ip')
+      return res.status(400).json({status: false, error: 'Missing params `type` or invalid.'})
+    if (req.body.type === 'user' && (req.body.user === undefined || req.body.user.uuid === undefined || req.body.user.username === undefined))
+      return res.status(400).json({status: false, error: 'Missing params `user.uuid` or `user.username`.'})
+    if (req.body.type === 'ip' && req.body.ip === undefined)
+      return res.status(400).json({status: false, error: 'Missing params `ip`.'})
+
+    // set user uuid if type is user and username is defined
+    if (req.body.type === 'user' && req.body.user.uuid === undefined)
+      db.get('sanctions').query("SELECT `UUID` AS `uuid` FROM BAT_players WHERE `BAT_player` = ? LIMIT 1", [req.body.user.username], function (err, rows, fields) {
+        if (err) {
+          console.error(err )
+          return res.status(500).json({status: false, error: 'Internal error when find user\'s uuid.'})
+        }
+        if (rows === undefined || rows.length === 0)
+          return res.status(404).json({status: false, error: 'User not found.'})
+        addBan(rows[0].uuid)
+      })
+    else if (req.body.type === 'user') // uuid set by client
+      addBan(req.body.user.uuid)
+    else // ban ip
+      addBan()
+
+    function addBan (uuid) {
+      // add ban
+      db.get('api').query("SELECT `username` AS `username` FROM api_users WHERE `id` = ? LIMIT 1", [req.api.user.id], function (err, rows, fields) {
+        if (err || rows === undefined || rows.length === 0) {
+          console.error(err || new Error('Api user not found.'))
+          return res.status(500).json({status: false, error: 'Internal error when find current api user.'})
+        }
+        // after get api_user's username
+        db.get('sanctions').query("INSERT INTO BAT_ban SET `UUID` = ?, `ban_ip` = ?, `ban_staff` = ?, `ban_reason` = ?, `ban_server` = ?, `ban_begin` = ?, `ban_state` = 1", [
+          (req.body.type === 'user' ? uuid : null),
+          (req.body.type === 'ip' ? req.body.ip : null),
+          rows[0].username,
+          req.body.server,
+          (new Date())
+        ], function (err, rows, fields) {
+          if (err) {
+            console.error(err)
+            return res.status(500).json({status: false, error: 'Internal error when edit ban.'})
+          }
+          res.json({
+            status: true,
+            success: 'Ban has been successfuly added!'
+          })
+        })
+      })
+    }
   }
 
 }

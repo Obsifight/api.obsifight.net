@@ -1,3 +1,6 @@
+1.0.0-alpha.0.3
+- Add POST /sanction/bans
+
 1.0.0-alpha.0.2
 - Add PUT /sanction/bans/<id>
 - Set req.api.user.id on auth.js
