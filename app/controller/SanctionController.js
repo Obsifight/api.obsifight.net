@@ -1,3 +1,4 @@
+var _ = require('underscore')
 var async = require('async')
 
 module.exports = {
@@ -67,7 +68,7 @@ module.exports = {
         return res.json({
           status: true,
           data: {
-            bans: bans
+            bans: _.sortBy(bans, 'id')
           }
         })
       })
