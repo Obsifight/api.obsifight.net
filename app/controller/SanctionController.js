@@ -1,55 +1,54 @@
 var _ = require('underscore')
 var async = require('async')
 
-module.exports = {
+var formatBan = function (ban, callback) {
+  // base
+  var formattedData = {
+    id: ban.id,
+    reason: ban.reason,
+    server: ban.server,
+    date: ban.date,
+    staff: (ban.staff_username != null) ? {username: ban.staff_username} : null,
+    end_date: ban.end_date,
+    state: ban.state,
+    duration: (ban.end_date == null) ? 'PERMANENT' : ((ban.end_date - ban.date) / 1000), // return time in minutes or PERMANENT
+    remove_date: ban.remove_date,
+    remove_staff: (ban.remove_staff != null) ? {username: ban.remove_staff} : null,
+    remove_reason: ban.remove_reason
+  }
 
-  __formatBan: function (ban, callback) {
-    // base
-    var formattedData = {
-      id: ban.id,
-      reason: ban.reason,
-      server: ban.server,
-      date: ban.date,
-      staff: (ban.staff_username != null) ? {username: ban.staff_username} : null,
-      end_date: ban.end_date,
-      state: ban.state,
-      duration: (ban.end_date == null) ? 'PERMANENT' : ((ban.end_date - ban.date) / 1000), // return time in minutes or PERMANENT
-      remove_date: ban.remove_date,
-      remove_staff: (ban.remove_staff != null) ? {username: ban.remove_staff} : null,
-      remove_reason: ban.remove_reason
+  // type of ban
+  if (ban.uuid != null) {
+    formattedData.user = {
+      uuid: ban.uuid
     }
-
-    // type of ban
-    if (ban.uuid != null) {
-      formattedData.user = {
-        uuid: ban.uuid
+    formattedData.ban_type = 'user'
+    // get username of user
+    db.get('sanctions').query("SELECT `BAT_player` AS `username` FROM BAT_players WHERE `UUID` = ? LIMIT 1", [ban.uuid], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
       }
-      formattedData.ban_type = 'user'
-      // get username of user
-      db.get('sanctions').query("SELECT `BAT_player` AS `username` FROM BAT_players WHERE `UUID` = ? LIMIT 1", [ban.uuid], function (err, rows, fields) {
-        if (err) {
-          console.error(err)
-          return res.status(500).json({status: false, error: 'Internal error.'})
-        }
-        if (rows !== undefined && rows.length > 0 && rows[0] !== undefined)
-          formattedData.user.username = rows[0].username
-        push()
-      })
-    } else if (ban.banned_ip != null) {
-      formattedData.ip = ban.banned_ip
-      formattedData.ban_type = 'ip'
+      if (rows !== undefined && rows.length > 0 && rows[0] !== undefined)
+        formattedData.user.username = rows[0].username
       push()
-    }
+    })
+  } else if (ban.banned_ip != null) {
+    formattedData.ip = ban.banned_ip
+    formattedData.ban_type = 'ip'
+    push()
+  }
 
-    // push result
-    function push () {
-      callback(formattedData)
-    }
-  },
+  // push result
+  function push () {
+    callback(formattedData)
+  }
+}
+
+module.exports = {
 
   getBans: function (req, res) {
     var limit = 100
-    var self = this
     if (req.query !== undefined && req.query.limit !== undefined)
       limit = parseInt(req.query.limit)
 
@@ -66,7 +65,7 @@ module.exports = {
 
       // formatting
       async.each(rows, function (ban, callback) { // for each bans
-        self.__formatBan(ban, function (formattedData) {
+        formatBan(ban, function (formattedData) {
           bans.push(formattedData)
           callback()
         })
@@ -85,7 +84,6 @@ module.exports = {
   },
 
   getBan: function (req, res) {
-    var self = this
     if (req.params.id === undefined || parseInt(req.params.id) != req.params.id)
       return res.status(400).json({status: false, error: 'Missing ban\'s id or invalid id.'})
 
@@ -99,7 +97,7 @@ module.exports = {
         return res.status(404).json({status: false, error: 'Ban not found.'})
 
       // formatting
-      self.__formatBan(rows[0], function (ban) {
+      formatBan(rows[0], function (ban) {
         // send to client
         return res.json({
           status: true,
