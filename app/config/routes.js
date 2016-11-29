@@ -6,7 +6,7 @@ module.exports = {
   'get /user/:username/vote/can': 'UserController.canVote',
 
   'get /sanction/bans': {'function': 'SanctionController.getBans', protected: true},
+  'get /sanction/bans/:id': {'function': 'SanctionController.getBan', protected: true},
   'post /sanction/bans': {'function': 'SanctionController.addBan', protected: true},
   'put /sanction/bans/:id': {'function': 'SanctionController.editBan', protected: true}
-
 }
