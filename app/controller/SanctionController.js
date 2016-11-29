@@ -1,6 +1,50 @@
 var _ = require('underscore')
 var async = require('async')
 
+var formatBan = function (ban, callback) {
+  // base
+  var formattedData = {
+    id: ban.id,
+    reason: ban.reason,
+    server: ban.server,
+    date: ban.date,
+    staff: (ban.staff_username != null) ? {username: ban.staff_username} : null,
+    end_date: ban.end_date,
+    state: ban.state,
+    duration: (ban.end_date == null) ? 'PERMANENT' : ((ban.end_date - ban.date) / 1000), // return time in minutes or PERMANENT
+    remove_date: ban.remove_date,
+    remove_staff: (ban.remove_staff != null) ? {username: ban.remove_staff} : null,
+    remove_reason: ban.remove_reason
+  }
+
+  // type of ban
+  if (ban.uuid != null) {
+    formattedData.user = {
+      uuid: ban.uuid
+    }
+    formattedData.ban_type = 'user'
+    // get username of user
+    db.get('sanctions').query("SELECT `BAT_player` AS `username` FROM BAT_players WHERE `UUID` = ? LIMIT 1", [ban.uuid], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      if (rows !== undefined && rows.length > 0 && rows[0] !== undefined)
+        formattedData.user.username = rows[0].username
+      push()
+    })
+  } else if (ban.banned_ip != null) {
+    formattedData.ip = ban.banned_ip
+    formattedData.ban_type = 'ip'
+    push()
+  }
+
+  // push result
+  function push () {
+    callback(formattedData)
+  }
+}
+
 module.exports = {
 
   getBans: function (req, res) {
@@ -21,48 +65,10 @@ module.exports = {
 
       // formatting
       async.each(rows, function (ban, callback) { // for each bans
-        // base
-        var formattedData = {
-          id: ban.id,
-          reason: ban.reason,
-          server: ban.server,
-          date: ban.date,
-          staff: (ban.staff_username != null) ? {username: ban.staff_username} : null,
-          end_date: ban.end_date,
-          state: ban.state,
-          duration: (ban.end_date == null) ? 'PERMANENT' : ((ban.end_date - ban.date) / 1000), // return time in minutes or PERMANENT
-          remove_date: ban.remove_date,
-          remove_staff: (ban.remove_staff != null) ? {username: ban.remove_staff} : null,
-          remove_reason: ban.remove_reason
-        }
-
-        // type of ban
-        if (ban.uuid != null) {
-          formattedData.user = {
-            uuid: ban.uuid
-          }
-          formattedData.ban_type = 'user'
-          // get username of user
-          db.get('sanctions').query("SELECT `BAT_player` AS `username` FROM BAT_players WHERE `UUID` = ? LIMIT 1", [ban.uuid], function (err, rows, fields) {
-            if (err) {
-              console.error(err)
-              return res.status(500).json({status: false, error: 'Internal error.'})
-            }
-            if (rows !== undefined && rows.length > 0 && rows[0] !== undefined)
-              formattedData.user.username = rows[0].username
-            push()
-          })
-        } else if (ban.banned_ip != null) {
-          formattedData.ip = ban.banned_ip
-          formattedData.ban_type = 'ip'
-          push()
-        }
-
-        // push result
-        function push () {
+        formatBan(ban, function (formattedData) {
           bans.push(formattedData)
           callback()
-        }
+        })
       }, function () {
         // send to client
         return res.json({
@@ -71,6 +77,32 @@ module.exports = {
             bans: _.sortBy(bans, function (num) {
               return -num
             })
+          }
+        })
+      })
+    })
+  },
+
+  getBan: function (req, res) {
+    if (req.params.id === undefined || parseInt(req.params.id) != req.params.id)
+      return res.status(400).json({status: false, error: 'Missing ban\'s id or invalid id.'})
+
+    // query
+    db.get('sanctions').query("SELECT `ban_id` AS `id`, `UUID` AS `uuid`, `ban_ip` AS `banned_ip`, `ban_staff` AS `staff_username`, `ban_reason` AS `reason`, `ban_server` AS `server`, `ban_begin` AS `date`, `ban_end` AS `end_date`, `ban_state` AS `state`, `ban_unbandate` AS `remove_date`, `ban_unbanstaff` AS `remove_staff`, `ban_unbanreason` AS `remove_reason` FROM BAT_ban WHERE `ban_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      if (rows === undefined || rows[0] === undefined)
+        return res.status(404).json({status: false, error: 'Ban not found.'})
+
+      // formatting
+      formatBan(rows[0], function (ban) {
+        // send to client
+        return res.json({
+          status: true,
+          data: {
+            ban: ban
           }
         })
       })
