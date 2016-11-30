@@ -44,6 +44,73 @@ var formatBan = function (ban, callback) {
     callback(formattedData)
   }
 }
+var formatKick = function (kick, callback) {
+  var formattedData = {
+    id: kick.id,
+    reason: kick.reason,
+    server: kick.server,
+    date: kick.date,
+    staff: (kick.staff_username != null) ? {username: kick.staff_username} : null
+  }
+
+  formattedData.user = {
+    uuid: kick.uuid
+  }
+  // get username of user
+  db.get('sanctions').query("SELECT `BAT_player` AS `username` FROM BAT_players WHERE `UUID` = ? LIMIT 1", [kick.uuid], function (err, rows, fields) {
+    if (err) {
+      console.error(err)
+      return res.status(500).json({status: false, error: 'Internal error.'})
+    }
+    if (rows !== undefined && rows.length > 0 && rows[0] !== undefined)
+      formattedData.user.username = rows[0].username
+    // push result
+    callback(formattedData)
+  })
+}
+var formatMute = function (mute, callback) {
+  // base
+  var formattedData = {
+    id: mute.id,
+    reason: mute.reason,
+    server: mute.server,
+    date: mute.date,
+    staff: (mute.staff_username != null) ? {username: mute.staff_username} : null,
+    end_date: mute.end_date,
+    state: mute.state,
+    duration: (mute.end_date == null) ? 'PERMANENT' : ((mute.end_date - mute.date) / 1000), // return time in minutes or PERMANENT
+    remove_date: mute.remove_date,
+    remove_staff: (mute.remove_staff != null) ? {username: mute.remove_staff} : null,
+    remove_reason: mute.remove_reason
+  }
+
+  // type of ban
+  if (mute.uuid != null) {
+    formattedData.user = {
+      uuid: mute.uuid
+    }
+    formattedData.mute_type = 'user'
+    // get username of user
+    db.get('sanctions').query("SELECT `BAT_player` AS `username` FROM BAT_players WHERE `UUID` = ? LIMIT 1", [mute.uuid], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      if (rows !== undefined && rows.length > 0 && rows[0] !== undefined)
+        formattedData.user.username = rows[0].username
+      push()
+    })
+  } else if (ban.banned_ip != null) {
+    formattedData.ip = mute.muted_ip
+    formattedData.mute_type = 'ip'
+    push()
+  }
+
+  // push result
+  function push () {
+    callback(formattedData)
+  }
+}
 
 module.exports = {
 
@@ -228,6 +295,118 @@ module.exports = {
         })
       })
     }
+  },
+
+  getUserSanctions: function (req, res) {
+    if (req.params.username === undefined)
+      return res.status(400).json({status: false, error: 'Missing user\'s name.'})
+
+    // handle limit
+    var limit = 100
+    if (req.query !== undefined && req.query.limit !== undefined)
+      limit = parseInt(req.query.limit)
+    limit = Math.round(limit / 3)
+
+    // find UUID
+    User.getUUIDFromUsername(req.params.username, function (err, uuid) {
+      if (err) {
+        if (typeof err === 'string') { // not found
+          return res.status(404).json({status: false, error: 'User not found.'})
+        } else { // mysql error
+          console.error(err)
+          return res.status(500).json({status: false, error: 'Internal error.'})
+        }
+      }
+      uuid = uuid.uuid // without '-'
+
+      // get sanctions
+      async.parallel([
+
+        function getBans (next) {
+          db.get('sanctions').query("SELECT `ban_id` AS `id`, `UUID` AS `uuid`, `ban_ip` AS `banned_ip`, `ban_staff` AS `staff_username`, `ban_reason` AS `reason`, `ban_server` AS `server`, `ban_begin` AS `date`, `ban_end` AS `end_date`, `ban_state` AS `state`, `ban_unbandate` AS `remove_date`, `ban_unbanstaff` AS `remove_staff`, `ban_unbanreason` AS `remove_reason` FROM BAT_ban WHERE `UUID` = ? ORDER BY `id` DESC LIMIT ?", [uuid, limit], function (err, rows, fields) {
+            if (err) return next(err)
+            if (rows === undefined || rows[0] === undefined)
+              return next(undefined, [])
+
+            // init response var (after formatting)
+            var bans = []
+
+            // formatting
+            async.each(rows, function (ban, callback) { // for each bans
+              formatBan(ban, function (formattedData) {
+                bans.push(formattedData)
+                callback()
+              })
+            }, function () {
+              next(undefined, _.sortBy(bans, function (num) {
+                return -num
+              }))
+            })
+          })
+        },
+
+        function getKicks (next) {
+          db.get('sanctions').query("SELECT `kick_id` AS `id`, `UUID` AS `uuid`, `kick_staff` AS `staff_username`, `kick_reason` AS `reason`, `kick_server` AS `server`, `kick_date` AS `date` FROM BAT_kick WHERE `UUID` = ? ORDER BY `id` DESC LIMIT ?", [uuid, limit], function (err, rows, fields) {
+            if (err) return next(err)
+            if (rows === undefined || rows[0] === undefined)
+              return next(undefined, [])
+
+            // init response var (after formatting)
+            var kicks = []
+
+            // formatting
+            async.each(rows, function (kick, callback) { // for each bans
+              formatKick(kick, function (formattedData) {
+                kicks.push(formattedData)
+                callback()
+              })
+            }, function () {
+              next(undefined, _.sortBy(kicks, function (num) {
+                return -num
+              }))
+            })
+          })
+        },
+
+        function getMutes (next) {
+          db.get('sanctions').query("SELECT `mute_id` AS `id`, `UUID` AS `uuid`, `mute_ip` AS `muted_ip`, `mute_staff` AS `staff_username`, `mute_reason` AS `reason`, `mute_server` AS `server`, `mute_begin` AS `date`, `mute_end` AS `end_date`, `mute_state` AS `state`, `mute_unmutedate` AS `remove_date`, `mute_unmutestaff` AS `remove_staff`, `mute_unmutereason` AS `remove_reason` FROM BAT_mute WHERE `UUID` = ? ORDER BY `id` DESC LIMIT ?", [uuid, limit], function (err, rows, fields) {
+            if (err) return next(err)
+            if (rows === undefined || rows[0] === undefined)
+              return next(undefined, [])
+
+            // init response var (after formatting)
+            var mutes = []
+
+            // formatting
+            async.each(rows, function (mute, callback) { // for each bans
+              formatMute(mute, function (formattedData) {
+                mutes.push(formattedData)
+                callback()
+              })
+            }, function () {
+              next(undefined, _.sortBy(mutes, function (num) {
+                return -num
+              }))
+            })
+          })
+        }
+
+      ], function (err, results) {
+        if (err) {
+          console.error(err)
+          return res.status(500).json({status: false, error: 'Internal error.'})
+        }
+        // results
+        return res.json({
+          status: true,
+          data: {
+            bans: results[0],
+            kicks: results[1],
+            mutes: results[2]
+          }
+        })
+      })
+    })
   }
 
 }
