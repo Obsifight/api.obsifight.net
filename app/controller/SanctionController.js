@@ -317,6 +317,7 @@ module.exports = {
           return res.status(500).json({status: false, error: 'Internal error.'})
         }
       }
+      uuid = uuid.uuid // without '-'
 
       // get sanctions
       async.parallel([
