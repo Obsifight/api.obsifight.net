@@ -305,7 +305,7 @@ module.exports = {
     var limit = 100
     if (req.query !== undefined && req.query.limit !== undefined)
       limit = parseInt(req.query.limit)
-    Math.round(limit = limit / 3)
+    limit = Math.round(limit / 3)
 
     // find UUID
     User.getUUIDFromUsername(req.params.username, function (err, uuid) {
