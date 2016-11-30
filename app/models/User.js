@@ -77,7 +77,7 @@ module.exports = {
       if (err) return next(err)
       if (rows === undefined || rows[0] === undefined) return next('User not found')
       return next(undefined, {
-        uuid: rows[0].uuid.replace('-', ''), // without '-'
+        uuid: rows[0].uuid.replace(/-/g, ''), // without '-'
         uuid_formatted: rows[0].uuid // with '-'
       })
     })

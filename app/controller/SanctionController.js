@@ -305,7 +305,7 @@ module.exports = {
     var limit = 100
     if (req.query !== undefined && req.query.limit !== undefined)
       limit = parseInt(req.query.limit)
-    limit = limit / 3
+    Math.round(limit = limit / 3)
 
     // find UUID
     User.getUUIDFromUsername(req.params.username, function (err, uuid) {
@@ -369,7 +369,7 @@ module.exports = {
         },
 
         function getMutes (next) {
-          db.get('sanctions').query("SELECT `mute_id` AS `id`, `UUID` AS `uuid`, `mute_ip` AS `muted_ip`, `mute_staff` AS `staff_username`, `mute_reason` AS `reason`, `mute_server` AS `server`, `mute_begin` AS `date`, `mute_end` AS `end_date`, `mute_state` AS `state`, `mute_unmutedate` AS `remove_date`, `mute_unmutestaff` AS `remove_staff`, `mute_unmutereason` AS `remove_reason` FROM BAT_ban WHERE `UUID` = ? ORDER BY `id` DESC LIMIT ?", [uuid, limit], function (err, rows, fields) {
+          db.get('sanctions').query("SELECT `mute_id` AS `id`, `UUID` AS `uuid`, `mute_ip` AS `muted_ip`, `mute_staff` AS `staff_username`, `mute_reason` AS `reason`, `mute_server` AS `server`, `mute_begin` AS `date`, `mute_end` AS `end_date`, `mute_state` AS `state`, `mute_unmutedate` AS `remove_date`, `mute_unmutestaff` AS `remove_staff`, `mute_unmutereason` AS `remove_reason` FROM BAT_mute WHERE `UUID` = ? ORDER BY `id` DESC LIMIT ?", [uuid, limit], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows[0] === undefined)
               return next(undefined, [])
