@@ -72,6 +72,17 @@ module.exports = {
     }
   },
 
+  getUUIDFromUsername: function (username, next) {
+    db.get('auth').query("SELECT `profileid` AS `uuid` FROM `joueurs` WHERE `user_pseudo` = ? LIMIT 1", [username], function (err, rows, fields) {
+      if (err) return next(err)
+      if (rows === undefined || rows[0] === undefined) return next('User not found')
+      return next(undefined, {
+        uuid: rows[0].uuid.replace('-', ''), // without '-'
+        uuid_formatted: rows[0].uuid // with '-'
+      })
+    })
+  },
+
   getAuthInfos: function (id, next) {
     db.get('auth').query("SELECT `profileid` AS `uuid`, `user_pseudo` AS `username`, `authorised_ip` AS `authorised_ip`, `dynamic_ip` AS `dynamic_ip`, `has_connected_v5` AS `has_connected_v5`, `is_register_v5` AS `is_register_v5`, `mac_adress` AS `mac_adress` FROM `joueurs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)

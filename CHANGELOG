@@ -1,5 +1,9 @@
+1.0.0-alpha.2.0
+- Add GET /user/<username>/sanctions
+- Add User.getUUIDFromUsername()
+
 1.0.0-alpha.1.0
-- Add GET /sanction/ban/:id
+- Add GET /sanction/ban/<id>
 
 1.0.0-alpha.0.3
 - Add POST /sanction/bans
