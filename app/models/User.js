@@ -1,6 +1,12 @@
 var async = require('async')
+var crypto = require('crypto')
 
 module.exports = {
+
+  encodePassword: function (username, password) {
+    var salt = 'PApVSuS8hDUEsOEP0fWZESmODaHkXVst27CTnYMM'
+    return crypto.createHash('sha1').update(username + salt + password).digest('hex')
+  },
 
   getIds: function (username, next) {
     var result = {

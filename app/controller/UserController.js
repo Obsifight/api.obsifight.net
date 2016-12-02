@@ -141,4 +141,32 @@ module.exports = {
     })
   }
 
+  authenticate: function (req, res) {
+    if (req.body.username === undefined || req.body.username.length === 0 || req.body.password === undefined || req.body.password.length === 0)
+      return res.status(400).json({status: false, error: 'Missing params.'})
+
+    // find user
+    db.get('web_v5').query("SELECT `id` AS `id`, `password` AS `password` FROM users WHERE `pseudo` = ? LIMIT 1", [req.body.username], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error when find user.'})
+      }
+
+      // not found
+      if (rows === undefined || rows[0] === undefined)
+        return res.status(404).json({status: false, error: 'User not found.'})
+
+      // check if password is valid
+      if (User.encodePassword(req.body.username, req.body.password) !== rows[0].password)
+        return res.status(403).json({status: false, error: "Invalid user's credentials."})
+
+      // valid
+      return res.json({status: true, data: {
+        user: {
+          id: rows[0].id
+        }
+      }})
+    })
+  }
+
 }
