@@ -139,7 +139,7 @@ module.exports = {
         })
       })
     })
-  }
+  },
 
   authenticate: function (req, res) {
     if (req.body.username === undefined || req.body.username.length === 0 || req.body.password === undefined || req.body.password.length === 0)
