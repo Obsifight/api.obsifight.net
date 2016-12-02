@@ -1,3 +1,6 @@
+1.0.0-alpha.3.0
+- Add POST /user/authenticate
+
 1.0.0-alpha.2.0
 - Add GET /user/<username>/sanctions
 - Add User.getUUIDFromUsername()
