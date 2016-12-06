@@ -338,7 +338,7 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Missing ban\'s id or invalid id.'})
 
     // query
-    db.get('sanctions').query("SELECT `mute_id` AS `id`, `UUID` AS `uuid`, `mute_ip` AS `muted_ip`, `mute_staff` AS `staff_username`, `mute_reason` AS `reason`, `mute_server` AS `server`, `mute_begin` AS `date`, `mute_end` AS `end_date`, `mute_state` AS `state`, `mute_unmutedate` AS `remove_date`, `mute_unmutestaff` AS `remove_staff`, `mute_unmutereason` AS `remove_reason` FROM BAT_mute WHERE `ban_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
+    db.get('sanctions').query("SELECT `mute_id` AS `id`, `UUID` AS `uuid`, `mute_ip` AS `muted_ip`, `mute_staff` AS `staff_username`, `mute_reason` AS `reason`, `mute_server` AS `server`, `mute_begin` AS `date`, `mute_end` AS `end_date`, `mute_state` AS `state`, `mute_unmutedate` AS `remove_date`, `mute_unmutestaff` AS `remove_staff`, `mute_unmutereason` AS `remove_reason` FROM BAT_mute WHERE `mute_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
