@@ -1,3 +1,9 @@
+1.0.0-alpha.4.0
+- Add GET /sanction/mutes/<id>
+- Add POST /sanction/mutes
+- Add PUT /sanction/mutes/<id>
+- Add GET /sanction/mutes
+
 1.0.0-alpha.3.0
 - Add POST /user/authenticate
 
@@ -6,7 +12,7 @@
 - Add User.getUUIDFromUsername()
 
 1.0.0-alpha.1.0
-- Add GET /sanction/ban/<id>
+- Add GET /sanction/bans/<id>
 
 1.0.0-alpha.0.3
 - Add POST /sanction/bans
