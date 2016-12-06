@@ -297,6 +297,189 @@ module.exports = {
     }
   },
 
+  getMutes: function (req, res) {
+    var limit = 100
+    if (req.query !== undefined && req.query.limit !== undefined)
+      limit = parseInt(req.query.limit)
+
+    db.get('sanctions').query("SELECT `mute_id` AS `id`, `UUID` AS `uuid`, `mute_ip` AS `muted_ip`, `mute_staff` AS `staff_username`, `mute_reason` AS `reason`, `mute_server` AS `server`, `mute_begin` AS `date`, `mute_end` AS `end_date`, `mute_state` AS `state`, `mute_unmutedate` AS `remove_date`, `mute_unmutestaff` AS `remove_staff`, `mute_unmutereason` AS `remove_reason` FROM BAT_mute WHERE 1 ORDER BY `id` DESC LIMIT ?", [limit], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      if (rows === undefined || rows[0] === undefined)
+        return res.status(404).json({status: false, error: 'No mutes found.'})
+
+      // init response var (after formatting)
+      var mutes = []
+
+      // formatting
+      async.each(rows, function (mute, callback) { // for each mutes
+        formatMute(mute, function (formattedData) {
+          mutes.push(formattedData)
+          callback()
+        })
+      }, function () {
+        // send to client
+        return res.json({
+          status: true,
+          data: {
+            mutes: _.sortBy(mutes, function (num) {
+              return -num
+            })
+          }
+        })
+      })
+    })
+  },
+
+  getMute: function (req, res) {
+    if (req.params.id === undefined || parseInt(req.params.id) != req.params.id)
+      return res.status(400).json({status: false, error: 'Missing ban\'s id or invalid id.'})
+
+    // query
+    db.get('sanctions').query("SELECT `mute_id` AS `id`, `UUID` AS `uuid`, `mute_ip` AS `muted_ip`, `mute_staff` AS `staff_username`, `mute_reason` AS `reason`, `mute_server` AS `server`, `mute_begin` AS `date`, `mute_end` AS `end_date`, `mute_state` AS `state`, `mute_unmutedate` AS `remove_date`, `mute_unmutestaff` AS `remove_staff`, `mute_unmutereason` AS `remove_reason` FROM BAT_mute WHERE `ban_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      if (rows === undefined || rows[0] === undefined)
+        return res.status(404).json({status: false, error: 'Mute not found.'})
+
+      // formatting
+      formatMute(rows[0], function (mute) {
+        // send to client
+        return res.json({
+          status: true,
+          data: {
+            mute: mute
+          }
+        })
+      })
+    })
+  },
+
+  editMute: function (req, res) {
+    if (req.params.id === undefined || parseInt(req.params.id) != req.params.id)
+      return res.status(400).json({status: false, error: 'Missing mute\'s id or invalid id.'})
+    // check body
+    if (req.body.end_date === undefined && req.body.remove_reason === undefined)
+      return res.status(400).json({status: false, error: 'Missing mute\'s `end_date` or `remove_reason`.'})
+    if (req.body.end_date !== undefined && new Date(req.body.end_date) == 'Invalid Date') // invalid end date specified
+      return res.status(400).json({status: false, error: 'Invalid mute\'s `end_date`.'})
+    if (req.body.end_date !== undefined && new Date(req.body.end_date).getTime() <= Date.now()) // user try to edit end_date for unmute user
+      return res.status(400).json({status: false, error: 'Invalid mute\'s `end_date`. You\'ve try to set `end_date` inferior or equal of now.'})
+
+    // find mute
+    db.get('sanctions').query("SELECT `mute_id` AS `id`, `mute_state` AS `state` FROM BAT_mute WHERE `mute_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      // unknown mute with this id
+      if (rows === undefined || rows[0] === undefined)
+        return res.status(404).json({status: false, error: 'Mute not found.'})
+      if (rows === undefined || rows[0].state == 0)
+        return res.status(404).json({status: false, error: 'Mute already expired.'})
+
+      if (req.body.end_date !== undefined) { // edit mute end date
+        db.get('sanctions').query("UPDATE BAT_mute SET `mute_end` = ? WHERE `mute_id` = ? LIMIT 1", [new Date(req.body.end_date), parseInt(req.params.id)], function (err, rows, fields) {
+          if (err) {
+            console.error(err)
+            return res.status(500).json({status: false, error: 'Internal error when edit mute.'})
+          }
+          render()
+        })
+      } else if (req.body.remove_reason !== undefined) { // unmute user
+        // find current api user with req.api.user.id
+        db.get('api').query("SELECT `username` AS `username` FROM api_users WHERE `id` = ? LIMIT 1", [req.api.user.id], function (err, rows, fields) {
+          if (err || rows === undefined || rows.length === 0) {
+            console.error(err || new Error('Api user not found.'))
+            return res.status(500).json({status: false, error: 'Internal error when find current api user.'})
+          }
+          db.get('sanctions').query("UPDATE BAT_mute SET `mute_state` = 0, `mute_unmutedate` = ?, `mute_unmutestaff` = ?, `mute_unmutereason` = ? WHERE `mute_id` = ? LIMIT 1", [(new Date()), rows[0].username, req.body.remove_reason, parseInt(req.params.id)], function (err, rows, fields) {
+            if (err) {
+              console.error(err)
+              return res.status(500).json({status: false, error: 'Internal error when edit mute.'})
+            }
+            render()
+          })
+        })
+      } else {
+        return res.status(400).json({status: false, error: 'Missing params.'})
+      }
+
+      function render () {
+        res.json({
+          status: true,
+          success: 'Mute has been successfuly edited!'
+        })
+      }
+    })
+  },
+
+  addMute: function (req, res) {
+    // Check args
+    var args = ['reason', 'server', 'type']
+    for (var i = 0; i < args.length; i++) {
+      if (req.body[args[i]] === undefined || req.body[args[i]].length === 0)
+        return res.status(400).json({status: false, error: 'Missing params `' + args[i] + '`.'})
+    }
+    if (req.body.type !== 'user' && req.body.type !== 'ip')
+      return res.status(400).json({status: false, error: 'Missing params `type` or invalid.'})
+    if (req.body.type === 'user' && req.body.user === undefined && (req.body.user.uuid === undefined || req.body.user.username === undefined))
+      return res.status(400).json({status: false, error: 'Missing params `user.uuid` or `user.username`.'})
+    if (req.body.type === 'ip' && req.body.ip === undefined)
+      return res.status(400).json({status: false, error: 'Missing params `ip`.'})
+    if (req.body.end_date !== undefined && new Date(req.body.end_date) == 'Invalid Date') // invalid end date specified
+      return res.status(400).json({status: false, error: 'Invalid mute\'s `end_date`.'})
+
+    // set user uuid if type is user and username is defined
+    if (req.body.type === 'user' && req.body.user.uuid === undefined)
+      db.get('sanctions').query("SELECT `UUID` AS `uuid` FROM BAT_players WHERE `BAT_player` = ? LIMIT 1", [req.body.user.username], function (err, rows, fields) {
+        if (err) {
+          console.error(err )
+          return res.status(500).json({status: false, error: 'Internal error when find user\'s uuid.'})
+        }
+        if (rows === undefined || rows.length === 0)
+          return res.status(404).json({status: false, error: 'User not found.'})
+        addMute(rows[0].uuid)
+      })
+    else if (req.body.type === 'user') // uuid set by client
+      addMute(req.body.user.uuid)
+    else // mute ip
+      addMute()
+
+    function addMute (uuid) {
+      // add mute
+      db.get('api').query("SELECT `username` AS `username` FROM api_users WHERE `id` = ? LIMIT 1", [req.api.user.id], function (err, rows, fields) {
+        if (err || rows === undefined || rows.length === 0) {
+          console.error(err || new Error('Api user not found.'))
+          return res.status(500).json({status: false, error: 'Internal error when find current api user.'})
+        }
+        // after get api_user's username
+        db.get('sanctions').query("INSERT INTO BAT_mute SET `UUID` = ?, `mute_ip` = ?, `mute_staff` = ?, `mute_reason` = ?, `mute_server` = ?, `mute_begin` = ?, `mute_end` = ?", [
+          (req.body.type === 'user' ? uuid : null),
+          (req.body.type === 'ip' ? req.body.ip : null),
+          rows[0].username,
+          req.body.reason,
+          req.body.server,
+          (new Date()),
+          (req.body.end_date || null)
+        ], function (err, rows, fields) {
+          if (err) {
+            console.error(err)
+            return res.status(500).json({status: false, error: 'Internal error when edit mute.'})
+          }
+          res.json({
+            status: true,
+            success: 'Mute has been successfuly added!'
+          })
+        })
+      })
+    }
+  },
+
   getUserSanctions: function (req, res) {
     if (req.params.username === undefined)
       return res.status(400).json({status: false, error: 'Missing user\'s name.'})

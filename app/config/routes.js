@@ -10,5 +10,9 @@ module.exports = {
   'get /sanction/bans': {'function': 'SanctionController.getBans', protected: true},
   'get /sanction/bans/:id': {'function': 'SanctionController.getBan', protected: true},
   'post /sanction/bans': {'function': 'SanctionController.addBan', protected: true},
-  'put /sanction/bans/:id': {'function': 'SanctionController.editBan', protected: true}
+  'put /sanction/bans/:id': {'function': 'SanctionController.editBan', protected: true},
+  'get /sanction/mutes': {'function': 'SanctionController.getMutes', protected: true},
+  'get /sanction/mutes/:id': {'function': 'SanctionController.getMute', protected: true},
+  'post /sanction/mutes': {'function': 'SanctionController.addMute', protected: true},
+  'put /sanction/mutes/:id': {'function': 'SanctionController.editMute', protected: true}
 }
