@@ -18,12 +18,13 @@ module.exports = {
         password: this.config[connectionName].password,
         database: this.config[connectionName].dbname
       })
+      var self = this
       this.connections[connectionName].connect(function (err) {
         if (err) {
           console.error(err)
           return process.exit()
         }
-        return this.connections[connectionName]
+        return self.connections[connectionName]
       })
     } else {
       return this.connections[connectionName]
