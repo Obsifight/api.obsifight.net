@@ -21,8 +21,7 @@ module.exports = {
       var self = this
       this.connections[connectionName].connect(function (err) {
         if (err) {
-          console.error(err)
-          return process.exit()
+          throw err
         }
         return self.connections[connectionName]
       })
