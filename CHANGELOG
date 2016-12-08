@@ -1,3 +1,7 @@
+1.0.0-alpha.4.2
+- Add mocha + chai + chai http for unit tests
+- Add unit tests for AuthController
+
 1.0.0-alpha.4.1
 - Use pooling for database connection
 - Add console.error when reach an internal error
