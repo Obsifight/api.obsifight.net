@@ -52,7 +52,7 @@ for (var route in routes) {
 
     if (routes[route].protected) {
       // init protected route
-      app[method](url, auth, require('../app/controller/' + controller)[action])
+      app[method](url, /* auth, */require('../app/controller/' + controller)[action]) // no protected routes for tests
       continue
     }
   }
@@ -92,8 +92,8 @@ global.connection = connection
 global.db = require('../Tests/vendors/db').setConfig(require('./config/db'))
 
 // models
-fs.readdir('../app/models', function (err, files) {
-  if (err) return false
+fs.readdir('./app/models', function (err, files) {
+  if (err) return console.error(err)
   files.forEach(function (file) {
     global[file.split('.js')[0]] = require('../app/models/' + file)
   })

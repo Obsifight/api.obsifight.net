@@ -1,3 +1,7 @@
+1.0.0-alpha.4.3
+- Fix User model when user has never logged to server (logblock id)
+- Add unit tests for User GET /user/:username
+
 1.0.0-alpha.4.2
 - Add mocha + chai + chai http for unit tests
 - Add unit tests for AuthController
