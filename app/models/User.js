@@ -71,7 +71,10 @@ module.exports = {
 
         result.web = results[0][0].id
         result.auth = results[1][0].user_id
-        result.logblock = results[2][0].playerid
+        if (results[2][0])
+          result.logblock = results[2][0].playerid
+        else
+          result.logblock = -1
 
         return next(undefined, result)
       })

@@ -44,42 +44,44 @@ describe('AuthController', function () {
     connection.query('DROP DATABASE IF EXISTS `obsiapiv6`;', next)
   })
   // POST /authenticate - AuthController.generateToken()
-  describe('POST /authenticate - without username and password set', function () {
-    it('should return 400 code', function (done) {
-      chai.request(app).post('/authenticate').end(function (err, res) {
-        expect(res.body.status).to.equal(false)
-        expect(res.body.error).to.equal('Missing username or password.')
-        expect(res).to.have.status(400)
-        done()
-      })
-    })
-  })
-  describe('POST /authenticate - with invalid credentials', function () {
-    it('should return 403 code', function (done) {
-      chai.request(app).post('/authenticate')
-      .send({username: 'false', password: 'false'})
-      .end(function (err, res) {
-        expect(res.body.status).to.equal(false)
-        expect(res.body.error).to.equal('Invalid credentials.')
-        expect(res).to.have.status(403)
-        done()
-      })
-    })
-  })
-  describe('POST /authenticate - with valid credentials', function () {
-    it('should return 200 code + token', function (done) {
-      // add user
-      connection.query("INSERT INTO `api_users` (`id`, `username`, `password`, `createdAt`, `lastAccess`) VALUES(1, 'true', 'true', '2016-12-08 21:23:00', NULL);", function (err) {
-        expect(err).to.be.null
-
-        // request
-        chai.request(app).post('/authenticate')
-        .send({username: 'true', password: 'true'})
-        .end(function (err, res) {
-          expect(res.body.status).to.equal(true)
-          expect(res.body.data.token).to.be.a('string')
-          expect(res).to.have.status(200)
+  describe('POST /authenticate', function () {
+    describe('without username and password set', function () {
+      it('should return 400 code', function (done) {
+        chai.request(app).post('/authenticate').end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('Missing username or password.')
+          expect(res).to.have.status(400)
           done()
+        })
+      })
+    })
+    describe('with invalid credentials', function () {
+      it('should return 403 code', function (done) {
+        chai.request(app).post('/authenticate')
+        .send({username: 'false', password: 'false'})
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('Invalid credentials.')
+          expect(res).to.have.status(403)
+          done()
+        })
+      })
+    })
+    describe('with valid credentials', function () {
+      it('should return 200 code + token', function (done) {
+        // add user
+        connection.query("INSERT INTO `api_users` (`id`, `username`, `password`, `createdAt`, `lastAccess`) VALUES(1, 'true', 'true', '2016-12-08 21:23:00', NULL);", function (err) {
+          expect(err).to.be.null
+
+          // request
+          chai.request(app).post('/authenticate')
+          .send({username: 'true', password: 'true'})
+          .end(function (err, res) {
+            expect(res.body.status).to.equal(true)
+            expect(res.body.data.token).to.be.a('string')
+            expect(res).to.have.status(200)
+            done()
+          })
         })
       })
     })
