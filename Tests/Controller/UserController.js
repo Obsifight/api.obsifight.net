@@ -247,7 +247,7 @@ describe('UserController', function () {
           connection.query(
             "INSERT INTO `web_v5`.`users` (`id`, `pseudo`, `password`, `email`, `rank`, `money`, `vote`, `ip`, `allowed_ip`, `skin`, `cape`, `created`, `rewards_waited`, `confirmed`, `obsi-skin_uploaded`, `obsi-cape_uploaded`, `obsi-number_phone`, `obsi-obsiguard_enabled`, `obsi-obsiguard_code`, `obsi-obsiguard_manage_key`, `obsi-can_update_pseudo`, `obsivote-kit_to_get`)" +
             "VALUES" +
-	          "(1, 'Tests', 'ea294fc4bfcb6befd31ce5c8957f7de831c31e0e', 'tests@eywek.fr', 0, '10', 5, '127.0.0.1', NULL, 1, 0, '2016-12-09 16:45:00', NULL, NULL, 0, 0, NULL, 0, NULL, NULL, 0, 0);",
+	          "(1, 'Tests', '7d916f71f0e1172159eb211b5eaeb12c4477d91d', 'tests@eywek.fr', 0, '10', 5, '127.0.0.1', NULL, 1, 0, '2016-12-09 16:45:00', NULL, NULL, 0, 0, NULL, 0, NULL, NULL, 0, 0);",
             callback
           )
         },
@@ -255,7 +255,7 @@ describe('UserController', function () {
         function (callback) {
           connection.query(
             "INSERT INTO `V4_launcher`.`joueurs` (`user_id`, `profileid`, `user_pseudo`, `user_mdp`, `access_token`, `authorised_ip`, `dynamic_ip`, `has_connected_v5`, `is_register_v5`, `mac_adress`) VALUES" +
-            "(2, '54fcfc84-1c98-4706-a98e-ae1e201b6402', 'Tests', 'ea294fc4bfcb6befd31ce5c8957f7de831c31e0e', '', NULL, 0, 0, 0, NULL);",
+            "(2, '54fcfc84-1c98-4706-a98e-ae1e201b6402', 'Tests', '7d916f71f0e1172159eb211b5eaeb12c4477d91d', '', NULL, 0, 0, 0, NULL);",
             callback
           )
         }
@@ -413,40 +413,213 @@ describe('UserController', function () {
     })
   })
   describe('POST /user/authenticate', function () {
-    describe('without username', function () { // TODO
-      it('should return 400 code')
+    describe('without any params', function () {
+      it('should return 400 code', function (done) {
+        chai.request(app).post('/user/authenticate')
+        .send({})
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('Missing params.')
+          expect(res).to.have.status(400)
+          done()
+        })
+      })
     })
-    describe('without password', function () { // TODO
-      it('should return 400 code')
+    describe('without username', function () {
+      it('should return 400 code', function (done) {
+        chai.request(app).post('/user/authenticate')
+        .send({password: 'pass'})
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('Missing params.')
+          expect(res).to.have.status(400)
+          done()
+        })
+      })
     })
-    describe('with unknown user', function () { // TODO
-      it('should return 404 code')
+    describe('without password', function () {
+      it('should return 400 code', function (done) {
+        chai.request(app).post('/user/authenticate')
+        .send({username: 'user'})
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('Missing params.')
+          expect(res).to.have.status(400)
+          done()
+        })
+      })
     })
-    describe('with invalid credentials', function () { // TODO
-      it('should return 403 code')
+    describe('with unknown user', function () {
+      it('should return 404 code', function (done) {
+        chai.request(app).post('/user/authenticate')
+        .send({username: 'false', password: 'false'})
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('User not found.')
+          expect(res).to.have.status(404)
+          done()
+        })
+      })
     })
-    describe('with valid credentials', function () { // TODO
-      it('should return 200 code')
+    describe('with invalid credentials', function () {
+      it('should return 403 code', function (done) {
+        chai.request(app).post('/user/authenticate')
+        .send({username: 'Tests', password: 'false'})
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal("Invalid user's credentials.")
+          expect(res).to.have.status(403)
+          done()
+        })
+      })
+    })
+    describe('with valid credentials', function () {
+      it('should return 200 code + user\'s id', function (done) {
+        chai.request(app).post('/user/authenticate')
+        .send({username: 'Tests', password: 'motdepasse'})
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(true)
+          expect(res.body.data).to.be.not.empty
+          expect(res.body.data).to.be.object
+          expect(res.body.data.user).to.be.object
+          expect(res.body.data.user).to.be.not.null
+          expect(res.body.data.user).to.be.object
+          expect(res.body.data.user.id).to.be.equal(1)
+          expect(res).to.have.status(200)
+          done()
+        })
+      })
     })
   })
   describe('GET /user/:username/vote/can', function () {
-    describe('without username', function () { // TODO
-      it('should return 400 code')
+    describe('without username', function () {
+      it('should return 404 code', function (done) {
+        chai.request(app).get('/user//vote/can').end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('Method not found.')
+          expect(res).to.have.status(404)
+          done()
+        })
+      })
     })
-    describe('unknown user', function () { // TODO
-      it('should return 404 code')
+    describe('unknown user', function () {
+      it('should return 404 code', function (done) {
+        chai.request(app).get('/user/fake/vote/can').end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('User not found.')
+          expect(res).to.have.status(404)
+          done()
+        })
+      })
     })
-    describe('user never vote', function () { // TODO
-      it('should return 200 code + status = true')
+    describe('user never vote', function () {
+      it('should return 200 code + status = true', function (done) {
+        // add config
+        connection.query('CREATE TABLE IF NOT EXISTS `web_v5`.`obsivote__configurations` (' +
+          '`id` int(20) NOT NULL AUTO_INCREMENT,' +
+          '`rewards_type` int(1) NOT NULL DEFAULT \'0\',' +
+          '`rewards` text NOT NULL,' +
+          '`time_vote` int(3) NOT NULL,' +
+          '`vote_url` varchar(150) NOT NULL,' +
+          '`out_url` varchar(150) NOT NULL,' +
+          '`server_id` int(11) NOT NULL,' +
+          'PRIMARY KEY (`id`)' +
+        ') ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2;' +
+        'TRUNCATE `web_v5`.`obsivote__configurations`;' +
+        'INSERT INTO `web_v5`.`obsivote__configurations` (`id`, `rewards_type`, `rewards`, `time_vote`, `vote_url`, `out_url`, `server_id`) VALUES' +
+        "(1, 0, 'rewards', 180, 'vote_page', 'out_page', 2);"
+        , function (err) {
+          if (err) {
+            console.error(err)
+            return process.exit()
+          }
+
+          chai.request(app).get('/user/Tests/vote/can').end(function (err, res) {
+            expect(res.body.status).to.equal(true)
+            expect(res.body.success).to.equal("User hasn't vote yet!")
+            expect(res).to.have.status(200)
+            connection.query('DROP TABLE `web_v5`.`obsivote__configurations`;', done)
+          })
+        })
+      })
     })
-    describe('no config', function () { // TODO
-      it('should return 200 code + status = true')
+    describe('no config', function () {
+      it('should return 200 code + status = true', function (done) {
+        chai.request(app).get('/user/Tests/vote/can').end(function (err, res) {
+          expect(res.body.status).to.equal(true)
+          expect(res.body.success).to.equal("User hasn't vote yet!")
+          expect(res).to.have.status(200)
+          done()
+        })
+      })
     })
-    describe('user has voted but can now', function () { // TODO
-      it('should return 200 code + status = true')
+    describe('user has voted but can now', function () {
+      it('should return 200 code + status = true', function (done) {
+        // add config
+        connection.query('CREATE TABLE IF NOT EXISTS `web_v5`.`obsivote__configurations` (' +
+          '`id` int(20) NOT NULL AUTO_INCREMENT,' +
+          '`rewards_type` int(1) NOT NULL DEFAULT \'0\',' +
+          '`rewards` text NOT NULL,' +
+          '`time_vote` int(3) NOT NULL,' +
+          '`vote_url` varchar(150) NOT NULL,' +
+          '`out_url` varchar(150) NOT NULL,' +
+          '`server_id` int(11) NOT NULL,' +
+          'PRIMARY KEY (`id`)' +
+        ') ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2;' +
+        'TRUNCATE `web_v5`.`obsivote__configurations`;' +
+        'INSERT INTO `web_v5`.`obsivote__configurations` (`id`, `rewards_type`, `rewards`, `time_vote`, `vote_url`, `out_url`, `server_id`) VALUES' +
+        "(1, 0, 'rewards', 180, 'vote_page', 'out_page', 2);" +
+        'TRUNCATE `web_v5`.`obsivote__votes`;' +
+        'INSERT INTO `web_v5`.`obsivote__votes` (`id`, `user_id`, `ip`, `created`) VALUES' +
+        "(1, 1, '127.0.0.1', '2016-01-01 00:00:00');"
+        , function (err) {
+          if (err) {
+            console.error(err)
+            return process.exit()
+          }
+
+          chai.request(app).get('/user/Tests/vote/can').end(function (err, res) {
+            expect(res.body.status).to.equal(true)
+            expect(res.body.success).to.equal("User can vote!")
+            expect(res).to.have.status(200)
+            connection.query('DROP TABLE `web_v5`.`obsivote__configurations`;', done)
+          })
+        })
+      })
     })
-    describe('user has voted', function () { // TODO
-      it('should return 200 code + status = false')
+    describe('user has voted', function () {
+      it('should return 200 code + status = false', function (done) {
+        // add config
+        connection.query('CREATE TABLE IF NOT EXISTS `web_v5`.`obsivote__configurations` (' +
+          '`id` int(20) NOT NULL AUTO_INCREMENT,' +
+          '`rewards_type` int(1) NOT NULL DEFAULT \'0\',' +
+          '`rewards` text NOT NULL,' +
+          '`time_vote` int(3) NOT NULL,' +
+          '`vote_url` varchar(150) NOT NULL,' +
+          '`out_url` varchar(150) NOT NULL,' +
+          '`server_id` int(11) NOT NULL,' +
+          'PRIMARY KEY (`id`)' +
+        ') ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2;' +
+        'TRUNCATE `web_v5`.`obsivote__configurations`;' +
+        'INSERT INTO `web_v5`.`obsivote__configurations` (`id`, `rewards_type`, `rewards`, `time_vote`, `vote_url`, `out_url`, `server_id`) VALUES' +
+        "(1, 0, 'rewards', 180, 'vote_page', 'out_page', 2);" +
+        'TRUNCATE `web_v5`.`obsivote__votes`;' +
+        'INSERT INTO `web_v5`.`obsivote__votes` (`id`, `user_id`, `ip`, `created`) VALUES' +
+        "(1, 1, '127.0.0.1', '" + new Date() + "');"
+        , function (err) {
+          if (err) {
+            console.error(err)
+            return process.exit()
+          }
+
+          chai.request(app).get('/user/Tests/vote/can').end(function (err, res) {
+            expect(res.body.status).to.equal(false)
+            expect(res.body.success).to.equal("User can't vote!")
+            expect(res).to.have.status(200)
+            connection.query('DROP TABLE `web_v5`.`obsivote__configurations`;', done)
+          })
+        })
+      })
     })
   })
 })

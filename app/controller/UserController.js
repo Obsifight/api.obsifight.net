@@ -118,6 +118,8 @@ module.exports = {
         if (rows === undefined || rows.length === 0)
           return res.json({status: true, success: "User hasn't vote yet!"})
 
+        var last_vote_date = (new Date(rows[0].last_vote_date)).getTime()
+
         // get configuration
         db.get('web_v5').query("SELECT `time_vote` AS `vote_cooldown` FROM obsivote__configurations WHERE 1 LIMIT 1", function (err, rows, fields) {
           // error
@@ -131,7 +133,7 @@ module.exports = {
           // check if cooldown (minutes) was passed
           var now = Date.now()
           var cooldown_time = rows[0].vote_cooldown * 60 * 1000 // minutes to miliseconds
-          cooldown_time = now + cooldown_time
+          cooldown_time = last_vote_date + cooldown_time
           if (now > cooldown_time)
             return res.json({status: true, success: "User can vote!"})
           else
