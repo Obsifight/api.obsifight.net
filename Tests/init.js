@@ -16,6 +16,11 @@ app.use(function (req, res, next) {
     res.json({status: false, error: 'API only accept JSON.'})
     return
   }
+  req.api = {
+    user: {
+      id: 1
+    }
+  }
   next()
 })
 var auth = require('../app/auth')

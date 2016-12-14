@@ -234,7 +234,7 @@ describe('UserController', function () {
       // truncate `V4_launcher`.`joueurs`
       function (callback) {
         connection.query('TRUNCATE `V4_launcher`.`joueurs`;', callback)
-      },
+      }
     ], function (err) {
       if (err) {
         console.error(err)

@@ -244,7 +244,7 @@ module.exports = {
     }
     if (req.body.type !== 'user' && req.body.type !== 'ip')
       return res.status(400).json({status: false, error: 'Missing params `type` or invalid.'})
-    if (req.body.type === 'user' && req.body.user === undefined && (req.body.user.uuid === undefined || req.body.user.username === undefined))
+    if (req.body.type === 'user' && (req.body.user === undefined || (req.body.user.uuid === undefined && req.body.user.username === undefined)))
       return res.status(400).json({status: false, error: 'Missing params `user.uuid` or `user.username`.'})
     if (req.body.type === 'ip' && req.body.ip === undefined)
       return res.status(400).json({status: false, error: 'Missing params `ip`.'})
@@ -263,7 +263,15 @@ module.exports = {
         addBan(rows[0].uuid)
       })
     else if (req.body.type === 'user') // uuid set by client
-      addBan(req.body.user.uuid)
+      db.get('sanctions').query("SELECT `UUID` AS `uuid` FROM BAT_players WHERE `UUID` = ? LIMIT 1", [req.body.user.uuid], function (err, rows, fields) {
+        if (err) {
+          console.error(err)
+          return res.status(500).json({status: false, error: 'Internal error when find user\'s uuid.'})
+        }
+        if (rows === undefined || rows.length === 0)
+          return res.status(404).json({status: false, error: 'User not found.'})
+        addBan(rows[0].uuid)
+      })
     else // ban ip
       addBan()
 
@@ -335,7 +343,7 @@ module.exports = {
 
   getMute: function (req, res) {
     if (req.params.id === undefined || parseInt(req.params.id) != req.params.id)
-      return res.status(400).json({status: false, error: 'Missing ban\'s id or invalid id.'})
+      return res.status(400).json({status: false, error: 'Missing mute\'s id or invalid id.'})
 
     // query
     db.get('sanctions').query("SELECT `mute_id` AS `id`, `UUID` AS `uuid`, `mute_ip` AS `muted_ip`, `mute_staff` AS `staff_username`, `mute_reason` AS `reason`, `mute_server` AS `server`, `mute_begin` AS `date`, `mute_end` AS `end_date`, `mute_state` AS `state`, `mute_unmutedate` AS `remove_date`, `mute_unmutestaff` AS `remove_staff`, `mute_unmutereason` AS `remove_reason` FROM BAT_mute WHERE `mute_id` = ? LIMIT 1", [parseInt(req.params.id)], function (err, rows, fields) {
@@ -427,7 +435,7 @@ module.exports = {
     }
     if (req.body.type !== 'user' && req.body.type !== 'ip')
       return res.status(400).json({status: false, error: 'Missing params `type` or invalid.'})
-    if (req.body.type === 'user' && req.body.user === undefined && (req.body.user.uuid === undefined || req.body.user.username === undefined))
+    if (req.body.type === 'user' && (req.body.user === undefined || (req.body.user.uuid === undefined && req.body.user.username === undefined)))
       return res.status(400).json({status: false, error: 'Missing params `user.uuid` or `user.username`.'})
     if (req.body.type === 'ip' && req.body.ip === undefined)
       return res.status(400).json({status: false, error: 'Missing params `ip`.'})
@@ -446,7 +454,15 @@ module.exports = {
         addMute(rows[0].uuid)
       })
     else if (req.body.type === 'user') // uuid set by client
-      addMute(req.body.user.uuid)
+      db.get('sanctions').query("SELECT `UUID` AS `uuid` FROM BAT_players WHERE `UUID` = ? LIMIT 1", [req.body.user.uuid], function (err, rows, fields) {
+        if (err) {
+          console.error(err)
+          return res.status(500).json({status: false, error: 'Internal error when find user\'s uuid.'})
+        }
+        if (rows === undefined || rows.length === 0)
+          return res.status(404).json({status: false, error: 'User not found.'})
+        addMute(rows[0].uuid)
+      })
     else // mute ip
       addMute()
 
