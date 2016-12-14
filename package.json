@@ -20,7 +20,7 @@
     "mocha": "^3.2.0"
   },
   "scripts": {
-    "test": "mocha Tests/**/*.js --require ./Tests/init.js"
+    "test": "mocha tests/**/*.js --require ./tests/init.js"
   },
   "repository": {
     "type": "git",

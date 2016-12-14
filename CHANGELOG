@@ -1,3 +1,8 @@
+1.0.0-alpha.4.5
+- Fix bug on POST /sanction/bans (check if username is defined)
+- Fix bug on POST /sanction/mutes (check if username is defined)
+- Add unit tests on SanctionController
+
 1.0.0-alpha.4.4
 - Fix bug on GET /user/:username/vote/can (fix cooldown)
 - End unit tests on UserController + add unit tests list on SanctionController
