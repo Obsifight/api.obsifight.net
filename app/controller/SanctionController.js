@@ -606,6 +606,72 @@ module.exports = {
         })
       })
     })
+  },
+
+  isUserBanned: function (req, res) {
+    if (req.params.username === undefined)
+      return res.status(400).json({status: false, error: 'Missing user\'s name.'})
+    // result
+    var banned = false
+
+    // find UUID
+    User.getUUIDFromUsername(req.params.username, function (err, uuid) {
+      if (err) {
+        if (typeof err === 'string') { // not found
+          return res.status(404).json({status: false, error: 'User not found.'})
+        } else { // mysql error
+          console.error(err)
+          return res.status(500).json({status: false, error: 'Internal error.'})
+        }
+      }
+      uuid = uuid.uuid // without '-'
+      // find ban active
+      db.get('sanctions').query("SELECT `ban_id` AS `id` FROM BAT_ban WHERE `UUID` = ? AND `ban_state` = 1 ORDER BY `id` DESC LIMIT 1", [uuid], function (err, rows, fields) {
+        if (err) return next(err)
+        if (rows !== undefined && rows !== undefined && rows.length > 0)
+          banned = true
+        // render
+        return res.json({
+          status: true,
+          data: {
+            banned: banned
+          }
+        })
+      })
+    })
+  },
+
+  isUserMuted: function (req, res) {
+    if (req.params.username === undefined)
+      return res.status(400).json({status: false, error: 'Missing user\'s name.'})
+    // result
+    var muted = false
+
+    // find UUID
+    User.getUUIDFromUsername(req.params.username, function (err, uuid) {
+      if (err) {
+        if (typeof err === 'string') { // not found
+          return res.status(404).json({status: false, error: 'User not found.'})
+        } else { // mysql error
+          console.error(err)
+          return res.status(500).json({status: false, error: 'Internal error.'})
+        }
+      }
+      uuid = uuid.uuid // without '-'
+      // find ban active
+      db.get('sanctions').query("SELECT `mute_id` AS `id` FROM BAT_mute WHERE `UUID` = ? AND `mute_state` = 1 ORDER BY `id` DESC LIMIT 1", [uuid], function (err, rows, fields) {
+        if (err) return next(err)
+        if (rows !== undefined && rows !== undefined && rows.length > 0)
+          muted = true
+        // render
+        return res.json({
+          status: true,
+          data: {
+            muted: muted
+          }
+        })
+      })
+    })
   }
 
 }

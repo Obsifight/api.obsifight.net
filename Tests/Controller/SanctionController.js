@@ -200,11 +200,27 @@ describe('SanctionController', function () {
             callback
           )
         },
+        // add user to BAT_players White
+        function (callback) {
+          connection.query(
+            "INSERT INTO `ObsiFight_Admin`.`BAT_players` (`BAT_player`, `UUID`, `lastip`, `firstlogin`, `lastlogin`) VALUES" +
+            "('White', '10009d4c8de84d2b877d759ef23df030', '127.0.0.1', '2016-05-07 21:32:18', '2016-09-12 11:54:24');",
+            callback
+          )
+        },
         // add user to auth Tests@motdepasse
         function (callback) {
           connection.query(
             "INSERT INTO `V4_launcher`.`joueurs` (`user_id`, `profileid`, `user_pseudo`, `user_mdp`, `access_token`, `authorised_ip`, `dynamic_ip`, `has_connected_v5`, `is_register_v5`, `mac_adress`) VALUES" +
             "(1, '00009d4c8de84d2b877d759ef23df030', 'Tests', '7d916f71f0e1172159eb211b5eaeb12c4477d91d', '', NULL, 0, 0, 0, NULL);",
+            callback
+          )
+        },
+        // add user to auth White@motdepasse
+        function (callback) {
+          connection.query(
+            "INSERT INTO `V4_launcher`.`joueurs` (`user_id`, `profileid`, `user_pseudo`, `user_mdp`, `access_token`, `authorised_ip`, `dynamic_ip`, `has_connected_v5`, `is_register_v5`, `mac_adress`) VALUES" +
+            "(2, '10009d4c8de84d2b877d759ef23df030', 'White', '7d916f71f0e1172159eb211b5eaeb12c4477d91d', '', NULL, 0, 0, 0, NULL);",
             callback
           )
         },
@@ -1775,6 +1791,108 @@ describe('SanctionController', function () {
           expect(res.body.data.mutes[0].remove_staff).to.be.null
           expect(res.body.data.mutes[0].remove_reason).to.be.null
 
+          done()
+        })
+      })
+    })
+  })
+
+  describe('GET /user/:username/sanctions/banned', function () {
+    describe('without username', function () {
+      it('should return 404 code', function (done) {
+        chai.request(app).get('/user//sanctions/banned')
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('Method not found.')
+          expect(res).to.have.status(404)
+          done()
+        })
+      })
+    })
+    describe('with unknown username', function () {
+      it('should return 404 code', function (done) {
+        chai.request(app).get('/user/unknown/sanctions/banned')
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('User not found.')
+          expect(res).to.have.status(404)
+          done()
+        })
+      })
+    })
+    describe('with valid username with no bans', function () {
+      it('should return 200 code with banned:false', function (done) {
+        chai.request(app).get('/user/White/sanctions/banned')
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(true)
+          expect(res.body.data).to.be.object
+          expect(res.body.data).to.be.not.null
+          expect(res.body.data.banned).to.be.equal(false)
+          expect(res).to.have.status(200)
+          done()
+        })
+      })
+    })
+    describe('with valid username with ban', function () {
+      it('should return 200 code with banned:true', function (done) {
+        chai.request(app).get('/user/Tests/sanctions/banned')
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(true)
+          expect(res.body.data).to.be.object
+          expect(res.body.data).to.be.not.null
+          expect(res.body.data.banned).to.be.equal(true)
+          expect(res).to.have.status(200)
+          done()
+        })
+      })
+    })
+  })
+
+  describe('GET /user/:username/sanctions/muted', function () {
+    describe('without username', function () {
+      it('should return 404 code', function (done) {
+        chai.request(app).get('/user//sanctions/muted')
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('Method not found.')
+          expect(res).to.have.status(404)
+          done()
+        })
+      })
+    })
+    describe('with unknown username', function () {
+      it('should return 404 code', function (done) {
+        chai.request(app).get('/user/unknown/sanctions/muted')
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('User not found.')
+          expect(res).to.have.status(404)
+          done()
+        })
+      })
+    })
+    describe('with valid username with no mutes', function () {
+      it('should return 200 code with muted:false', function (done) {
+        chai.request(app).get('/user/White/sanctions/muted')
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(true)
+          expect(res.body.data).to.be.object
+          expect(res.body.data).to.be.not.null
+          expect(res.body.data.muted).to.be.equal(false)
+          expect(res).to.have.status(200)
+          done()
+        })
+      })
+    })
+    describe('with valid username with mute', function () {
+      it('should return 200 code with muted:true', function (done) {
+        chai.request(app).get('/user/Tests/sanctions/muted')
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(true)
+          expect(res.body.data).to.be.object
+          expect(res.body.data).to.be.not.null
+          expect(res.body.data.muted).to.be.equal(true)
+          expect(res).to.have.status(200)
           done()
         })
       })

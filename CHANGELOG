@@ -1,3 +1,7 @@
+1.0.0-alpha.5.0
+- Add GET /user/:username/sanctions/banned
+- Add GET /user/:username/sanctions/muted
+
 1.0.0-alpha.4.5
 - Fix bug on POST /sanction/bans (check if username is defined)
 - Fix bug on POST /sanction/mutes (check if username is defined)
