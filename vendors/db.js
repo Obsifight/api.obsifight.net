@@ -12,12 +12,11 @@ module.exports = {
 
   get: function (connectionName) {
     if (this.connections[connectionName] === undefined) {
-      this.connections[connectionName] = mysql.createPool({
+      this.connections[connectionName] = mysql.createConnection({
         host: this.config[connectionName].host,
         user: this.config[connectionName].user,
         password: this.config[connectionName].password,
-        database: this.config[connectionName].dbname,
-        connectionLimit: 10
+        database: this.config[connectionName].dbname
       })
       this.connections[connectionName].connect()
     }
