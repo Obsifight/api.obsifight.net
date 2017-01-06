@@ -205,19 +205,21 @@ module.exports = {
         if (rows === undefined || rows.length === 0)
           return next()
         // each users
-        for (var k = 0; k < rows.length; k++) {
+        async.each(rows, function (row, cb) {
           // get username
-          User.getUsernameFromUUID(rows[k].user, function (err, data) {
+          User.getUsernameFromUUID(row.user, function (err, data) {
             if (err) {
               console.error(err)
-              return next()
+              return cb()
             }
             if (!usersByRanks[rank.customGroupName])
               usersByRanks[rank.customGroupName] = []
             usersByRanks[rank.customGroupName].push(data.username)
-            return next()
+            return cb()
           })
-        }
+        }, function () {
+          return next()
+        })
       })
     }, () => {
       res.json({
