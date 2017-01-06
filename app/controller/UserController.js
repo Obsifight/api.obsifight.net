@@ -191,39 +191,41 @@ module.exports = {
 
   getStaff: function (req, res) {
     var ranks = config.staff.ranks
-    if (typeof req.body.premium !== 'undefined')
+    if (req.body.premium)
       ranks = _.findWhere(ranks, {premium: true})
     // find groups id
     var usersByRanks = {}
-    for (var i = 0; i < ranks.length; i++) {
-      db.get('pex').query('SELECT `child` AS `user` FROM `permissions_inheritance` WHERE `parent` = ?', [ranks[i].name], function (err, rows, fields) {
+    async.parallel(ranks, function (rank, next) {
+      db.get('pex').query('SELECT `child` AS `user` FROM `permissions_inheritance` WHERE `parent` = ?', [rank.name], function (err, rows, fields) {
         if (err) {
           console.error(err)
-          continue
+          return next()
         }
         // empty
         if (rows === undefined || rows.length === 0)
-          continue
+          return next()
         // each users
         for (var k = 0; k < rows.length; k++) {
           // get username
           User.getUsernameFromUUID(rows[k].user, function (err, data) {
             if (err) {
               console.error(err)
-              continue
+              return next()
             }
-            if (typeof usersByRanks[ranks[i].customGroupName] !== 'object') usersByRanks[ranks[i].customGroupName] = []
-            usersByRanks[ranks[i].customGroupName].push(data.username)
+            if (!usersByRanks[rank.customGroupName])
+              usersByRanks[rank.customGroupName] = []
+            usersByRanks[rank.customGroupName].push(data.username)
+            return next()
           })
         }
       })
-    }
-    // send to view
-    res.json({
-      status: true,
-      data: {
-        staff: usersByRanks
-      }
+    }, () => {
+      res.json({
+        status: true,
+        data: {
+          staff: usersByRanks
+        }
+      })
     })
   }
 
