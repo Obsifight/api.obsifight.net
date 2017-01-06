@@ -3,6 +3,7 @@ module.exports = {
   'post /authenticate': 'AuthController.generateToken',
 
   'get /user/:username': {'function': 'UserController.get', protected: true},
+  'get /user/from/uuid/:uuid': {'function': 'UserController.getFromUUID', protected: true},
   'post /user/authenticate': {'function': 'UserController.authenticate', protected: true},
   'get /user/:username/sanctions': {'function': 'SanctionController.getUserSanctions', protected: true},
   'get /user/:username/sanctions/banned': {'function': 'SanctionController.isUserBanned', protected: true},
