@@ -412,6 +412,42 @@ describe('UserController', function () {
       it('should return 200 code + user\'s data')
     })
   })
+  describe('GET /user/from/uuid/:uuid', function () {
+    describe('without username', function () {
+      it('should return 404 code', function (done) {
+        chai.request(app).get('/user/from/uuid//').end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('Method not found.')
+          expect(res).to.have.status(404)
+          done()
+        })
+      })
+    })
+    describe('with unknown user', function () {
+      it('should return 404 code', function (done) {
+        chai.request(app).get('/user/from/uuid/fakeuser')
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(false)
+          expect(res.body.error).to.equal('User not found.')
+          expect(res).to.have.status(404)
+          done()
+        })
+      })
+    })
+    describe('with valid uuid', function () {
+      it('should return 200 code', function (done) {
+        chai.request(app).get('/user/from/uuid/54fcfc84-1c98-4706-a98e-ae1e201b6402')
+        .end(function (err, res) {
+          expect(res.body.status).to.equal(true)
+          expect(res.body.data).to.be.object
+          expect(res.body.data).to.be.not.empty
+          expect(res.body.data.username).to.equal('Tests')
+          expect(res).to.have.status(200)
+          done()
+        })
+      })
+    })
+  })
   describe('POST /user/authenticate', function () {
     describe('without any params', function () {
       it('should return 400 code', function (done) {
