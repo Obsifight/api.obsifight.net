@@ -40,14 +40,14 @@ module.exports = {
         customGroupName: 'Modérateurs'
       },
       {
-        name: 'Administrateur',
-        premium: true,
-        customGroupName: 'Administrateurs'
-      },
-      {
         name: 'dev',
         premium: true,
         customGroupName: 'Développeurs'
+      },
+      {
+        name: 'Administrateur',
+        premium: true,
+        customGroupName: 'Administrateurs'
       },
       {
         name: 'fondateur',

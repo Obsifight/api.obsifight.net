@@ -224,9 +224,7 @@ module.exports = {
     }, () => {
       res.json({
         status: true,
-        data: {
-          staff: usersByRanks
-        }
+        data: usersByRanks
       })
     })
   }
