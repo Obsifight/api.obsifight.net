@@ -9,6 +9,7 @@ module.exports = {
   'get /user/:username/sanctions/banned': {'function': 'SanctionController.isUserBanned', protected: true},
   'get /user/:username/sanctions/muted': {'function': 'SanctionController.isUserMuted', protected: true},
   'get /user/:username/vote/can': 'UserController.canVote',
+  'get /users/staff/:premium?': 'UserController.getStaff',
 
   'get /sanction/bans': {'function': 'SanctionController.getBans', protected: true},
   'get /sanction/bans/:id': {'function': 'SanctionController.getBan', protected: true},

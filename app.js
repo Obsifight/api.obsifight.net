@@ -53,7 +53,7 @@ app.use(function (req, res, next) {
 // =======================
 
 var auth = require('./app/auth')
-var config = require('./app/config/global')
+global.config = require('./app/config/global')
 
 // =======================
 // routes ================

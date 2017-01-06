@@ -187,6 +187,48 @@ module.exports = {
         }
       }})
     })
+  },
+
+  getStaff: function (req, res) {
+    var ranks = config.staff.ranks
+    if (req.body.premium)
+      ranks = _.findWhere(ranks, {premium: true})
+    // find groups id
+    var usersByRanks = {}
+    async.each(ranks, function (rank, next) {
+      db.get('pex').query('SELECT `child` AS `user` FROM `permissions_inheritance` WHERE `parent` = ?', [rank.name], function (err, rows, fields) {
+        if (err) {
+          console.error(err)
+          return next()
+        }
+        // empty
+        if (rows === undefined || rows.length === 0)
+          return next()
+        // each users
+        async.each(rows, function (row, cb) {
+          // get username
+          User.getUsernameFromUUID(row.user, function (err, data) {
+            if (err) {
+              console.error(err)
+              return cb()
+            }
+            if (!usersByRanks[rank.customGroupName])
+              usersByRanks[rank.customGroupName] = []
+            usersByRanks[rank.customGroupName].push(data.username)
+            return cb()
+          })
+        }, function () {
+          return next()
+        })
+      })
+    }, () => {
+      res.json({
+        status: true,
+        data: {
+          staff: usersByRanks
+        }
+      })
+    })
   }
 
 }
