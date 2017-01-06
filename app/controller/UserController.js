@@ -195,7 +195,7 @@ module.exports = {
       ranks = _.findWhere(ranks, {premium: true})
     // find groups id
     var usersByRanks = {}
-    async.parallel(ranks, function (rank, next) {
+    async.each(ranks, function (rank, next) {
       db.get('pex').query('SELECT `child` AS `user` FROM `permissions_inheritance` WHERE `parent` = ?', [rank.name], function (err, rows, fields) {
         if (err) {
           console.error(err)
