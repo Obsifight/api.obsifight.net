@@ -1,3 +1,6 @@
+1.0.0-alpha.7.0
+- Add GET /users/staff/
+
 1.0.0-alpha.6.0
 - Add GET /user/from/uuid/:uuid
 
