@@ -627,7 +627,10 @@ module.exports = {
       uuid = uuid.uuid // without '-'
       // find ban active
       db.get('sanctions').query("SELECT `ban_id` AS `id` FROM BAT_ban WHERE `UUID` = ? AND `ban_state` = 1 ORDER BY `id` DESC LIMIT 1", [uuid], function (err, rows, fields) {
-        if (err) return next(err)
+        if (err) {
+          console.error(err)
+          return res.status(500).json({status: false, error: 'Internal error.'})
+        }
         if (rows !== undefined && rows !== undefined && rows.length > 0)
           banned = true
         // render
@@ -660,7 +663,10 @@ module.exports = {
       uuid = uuid.uuid // without '-'
       // find ban active
       db.get('sanctions').query("SELECT `mute_id` AS `id` FROM BAT_mute WHERE `UUID` = ? AND `mute_state` = 1 ORDER BY `id` DESC LIMIT 1", [uuid], function (err, rows, fields) {
-        if (err) return next(err)
+        if (err) {
+          console.error(err)
+          return res.status(500).json({status: false, error: 'Internal error.'})
+        }
         if (rows !== undefined && rows !== undefined && rows.length > 0)
           muted = true
         // render
