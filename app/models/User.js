@@ -117,10 +117,22 @@ module.exports = {
       if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
 
       // find logs with username
-      db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `date` AS `date`, `mac_adress` AS `mac_adress` FROM `loginlogs` WHERE `username` = ?", [rows[0].username], function (err, rows, fields) {
+      db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `date` AS `date` FROM `loginlogs` WHERE `username` = ?", [rows[0].username], function (err, rows, fields) {
         if (err) return next(err)
         if (rows === undefined || rows.length === 0) return next(undefined, [])
-        return next(undefined, rows)
+        // find mac adresses
+        async.eachOf(rows, function (row, index, cb) {
+          db.get('auth').query("SELECT `id` AS `id`, `user_id` AS `user_id`, `adress` AS `adress`, `login_date` AS `login_date` FROM `mac_adresses` WHERE `login_date` = ?", [row.date], function (err, mac_adresses, fields) {
+            if (err) return next(err)
+            rows[index].mac_adresses = []
+            for (var i = 0; i < mac_adresses.length; i++) {
+              rows[index].mac_adresses.push(mac_adresses[i].adress)
+            }
+            cb()
+          })
+        }, function () {
+          return next(undefined, rows)
+        })
       })
     })
   },
