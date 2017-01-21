@@ -73,6 +73,14 @@ module.exports = {
           return res.status(500).json({status: false, error: 'Internal error.'})
         }
 
+        // mac
+        var adresses = []
+        results[1].forEach(function (connection) {
+          connection.mac_adresses.forEach(function (adress) {
+            adresses.push({adress: adress})
+          })
+        })
+
         // render to user
         res.json({
           status: true,
@@ -84,9 +92,9 @@ module.exports = {
             },
             uuid: results[0].uuid,
             registerDate: results[2].register_date,
-            lastConnection: results[1][0], // launcher's logs
+            lastConnection: results[1][results[1].length - 1], // launcher's logs
             adresses: {
-              mac: Object.keys(_.groupBy(results[1], 'mac_adress')).remove('null'),
+              mac: Object.keys(_.groupBy(adresses, 'adress')).remove('null'),
               ip: Object.keys(_.groupBy(results[1], 'ip')).remove('null')
             }
           }
