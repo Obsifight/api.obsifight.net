@@ -18,7 +18,7 @@ module.exports = {
 
     // web
     if (username == parseInt(username)) { // is an id
-      db.get('web_v5').query("SELECT `pseudo` FROM users WHERE `id` = ? LIMIT 1", [username], function (err, rows, fields) {
+      db.get('web_v6').query("SELECT `pseudo` FROM users WHERE `id` = ? LIMIT 1", [username], function (err, rows, fields) {
         if (err) return next(err)
         queries(rows[0].pseudo)
       })
@@ -28,13 +28,13 @@ module.exports = {
 
     function checkIfNotAndOldUsername(username) {
       // find if username wasn't an old username
-      db.get('web_v5').query("SELECT `user_id` AS `user_id` FROM `obsi__pseudo_update_histories` WHERE `old_pseudo` = ? LIMIT 1", [username], function (err, rows, fields) {
+      db.get('web_v6').query("SELECT `user_id` AS `user_id` FROM `obsi__pseudo_update_histories` WHERE `old_pseudo` = ? LIMIT 1", [username], function (err, rows, fields) {
         if (err) return next(err)
         if (rows === undefined || rows.length === 0)
           return queries(username)
 
         // old username, so get new username with this id
-        db.get('web_v5').query("SELECT `pseudo` AS `username` FROM users WHERE `id` = ? LIMIT 1", [rows[0].user_id], function (err, rows, fields) {
+        db.get('web_v6').query("SELECT `pseudo` AS `username` FROM users WHERE `id` = ? LIMIT 1", [rows[0].user_id], function (err, rows, fields) {
           if (err) return next(err)
           if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
           return queries(rows[0].username)
@@ -46,7 +46,7 @@ module.exports = {
       async.parallel([
         // web
         function (callback) {
-          db.get('web_v5').query("SELECT `id` FROM users WHERE `pseudo` = ? LIMIT 1", [username], function (err, rows, fields) {
+          db.get('web_v6').query("SELECT `id` FROM users WHERE `pseudo` = ? LIMIT 1", [username], function (err, rows, fields) {
             if (err) return callback(err)
             callback(undefined, rows)
           })
@@ -126,7 +126,7 @@ module.exports = {
   },
 
   getWebsiteInfos: function (id, next) {
-    db.get('web_v5').query("SELECT `id` AS `id`, `pseudo` AS `username`, `email` AS `email`, `money` AS `money`, `ip` AS `register_ip`, `skin` AS `has_purchased_skin`, `cape` AS `has_purchased_cape`, `created` AS `register_date`, `obsi-skin_uploaded` AS `skin_uploaded`, `obsi-cape_uploaded` AS `cape_uploaded`, `obsi-obsiguard_enabled` AS `obsiguard_enabled` FROM `users` WHERE `id` = ? LIMIT 1", [id], function (err, rows, fields) {
+    db.get('web_v6').query("SELECT `id` AS `id`, `pseudo` AS `username`, `email` AS `email`, `money` AS `money`, `ip` AS `register_ip`, `skin` AS `has_purchased_skin`, `cape` AS `has_purchased_cape`, `created` AS `register_date`, `obsi-skin_uploaded` AS `skin_uploaded`, `obsi-cape_uploaded` AS `cape_uploaded`, `obsi-obsiguard_enabled` AS `obsiguard_enabled` FROM `users` WHERE `id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
       return next(undefined, rows[0])
@@ -134,7 +134,7 @@ module.exports = {
   },
 
   getUsernameUpdateLogs: function (id, next) {
-    db.get('web_v5').query("SELECT `id` AS `id`, `user_id` AS `user_id`, `old_pseudo` AS `old_username`, `new_pseudo` AS `new_username`, `created` AS `update_date` FROM `obsi__pseudo_update_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+    db.get('web_v6').query("SELECT `id` AS `id`, `user_id` AS `user_id`, `old_pseudo` AS `old_username`, `new_pseudo` AS `new_username`, `created` AS `update_date` FROM `obsi__pseudo_update_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       return next(undefined, rows)

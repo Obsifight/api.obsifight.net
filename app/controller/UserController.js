@@ -118,7 +118,7 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Missing user\'s name.'})
 
     // find user
-    db.get('web_v5').query("SELECT `id` AS `id` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
+    db.get('web_v6').query("SELECT `id` AS `id` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
@@ -126,7 +126,7 @@ module.exports = {
       if (rows === undefined || rows[0] === undefined)
         return res.status(404).json({status: false, error: 'User not found.'})
       // find user's vote
-      db.get('web_v5').query("SELECT `created` AS `last_vote_date` FROM obsivote__votes WHERE `user_id` = ? LIMIT 1", [rows[0].id], function (err, rows, fields) {
+      db.get('web_v6').query("SELECT `created` AS `last_vote_date` FROM obsivote__votes WHERE `user_id` = ? LIMIT 1", [rows[0].id], function (err, rows, fields) {
         // error
         if (err) {
           console.error(err)
@@ -139,7 +139,7 @@ module.exports = {
         var last_vote_date = (new Date(rows[0].last_vote_date)).getTime()
 
         // get configuration
-        db.get('web_v5').query("SELECT `time_vote` AS `vote_cooldown` FROM obsivote__configurations WHERE 1 LIMIT 1", function (err, rows, fields) {
+        db.get('web_v6').query("SELECT `time_vote` AS `vote_cooldown` FROM obsivote__configurations WHERE 1 LIMIT 1", function (err, rows, fields) {
           // error
           if (err) {
             console.error(err)
@@ -166,7 +166,7 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Missing params.'})
 
     // find user
-    db.get('web_v5').query("SELECT `id` AS `id`, `password` AS `password` FROM users WHERE `pseudo` = ? LIMIT 1", [req.body.username], function (err, rows, fields) {
+    db.get('web_v6').query("SELECT `id` AS `id`, `password` AS `password` FROM users WHERE `pseudo` = ? LIMIT 1", [req.body.username], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error when find user.'})
