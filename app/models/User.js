@@ -120,7 +120,15 @@ module.exports = {
       db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `date` AS `date`, `mac_adress` AS `mac_adress` FROM `loginlogs` WHERE `username` = ?", [rows[0].username], function (err, rows, fields) {
         if (err) return next(err)
         if (rows === undefined || rows.length === 0) return next(undefined, [])
-        return next(undefined, rows)
+        async.eachOf(rows, function (row, index, cb) {
+          try {
+            rows[index] = JSON.parse(row.mac_adress)
+          } catch (e) {
+            rows[index] = []
+          }
+        }, function () {
+          return next(undefined, rows)
+        })
       })
     })
   },

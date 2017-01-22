@@ -76,9 +76,10 @@ module.exports = {
         // mac
         var adresses = []
         results[1].forEach(function (connection) {
-          JSON.parse(connection.mac_adresses).forEach(function (adress) {
-            adresses.push({adress: adress})
-          })
+          if (connection.mac_adress)
+            connection.mac_adress.forEach(function (adress) {
+              adresses.push({adress: adress})
+            })
         })
 
         // render to user
