@@ -126,6 +126,7 @@ module.exports = {
           } catch (e) {
             rows[index] = []
           }
+          cb()
         }, function () {
           return next(undefined, rows)
         })
