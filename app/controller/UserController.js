@@ -39,9 +39,14 @@ module.exports = {
 
             // formatting
             var formattedData = _.each(rows, function (element, index) { // rows is an array with logs
+              try {
+                var mac = JSON.parse(element.mac_adress)
+              } catch (e) {
+                var mac = []
+              }
               return {
                 ip: element.ip,
-                mac: element.mac_adress,
+                mac: mac,
                 date: element.date
               }
             })
