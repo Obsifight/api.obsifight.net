@@ -38,19 +38,16 @@ module.exports = {
             if (err) return callback(err)
 
             // formatting
-            var formattedData = _.each(rows, function (element, index) { // rows is an array with logs
+            async.eachOf(rows, function (row, index, cb) {
               try {
-                var mac = JSON.parse(element.mac_adress)
+                rows[index].mac_adress = JSON.parse(row.mac_adress)
               } catch (e) {
-                var mac = []
+                rows[index].mac_adress = []
               }
-              return {
-                ip: element.ip,
-                mac: mac,
-                date: element.date
-              }
+              cb()
+            }, function () {
+              return callback(undefined, rows)
             })
-            return callback(undefined, formattedData)
           })
         },
 
