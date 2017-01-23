@@ -238,6 +238,52 @@ module.exports = {
         data: usersByRanks
       })
     })
+  },
+
+  getMoneyTimeline: function (req, res) {
+    if (req.params.username === undefined)
+      return res.status(400).json({status: false, error: 'Missing user\'s name.'})
+    // find user
+    db.get('web_v6').query("SELECT `id` AS `id` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      if (rows === undefined || rows[0] === undefined)
+        return res.status(404).json({status: false, error: 'User not found.'})
+      async.parallel([
+        // get refunds
+        function (callback) {
+          User.getRefunds(rows[0].id, callback)
+        },
+        // get items buy
+        function (callback) {
+          User.getItemsPurchases(rows[0].id, callback)
+        },
+        // get money buy
+        function (callback) {
+          User.getMoneyPurchases(rows[0].id, callback)
+        },
+        // get money transfers
+        function (callback) {
+          User.getMoneyTransfers(rows[0].id, callback)
+        }
+      ], function (err, results) {
+        // formatting
+        var timeline = []
+        timeline = timeline.concat(results[0], results[1], results[2], results[3])
+        timeline.sort(function(a,b) {
+          return new Date(b.date).getTime() - new Date(a.date).getTime()
+        })
+        // response
+        res.json({
+          status: true,
+          data: {
+            timeline: timeline
+          }
+        })
+      })
+    })
   }
 
 }
