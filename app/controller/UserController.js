@@ -272,8 +272,8 @@ module.exports = {
         // formatting
         var timeline = []
         timeline.concat(results[0], results[1], results[2], results[3])
-        timeline.sort(function(a,b) {
-          return new Date(b.date).getTime() - new Date(a.date).getTime() 
+        timeline = timeline.sort(function(a,b) {
+          return new Date(b.date).getTime() - new Date(a.date).getTime()
         })
         // response
         res.json({
