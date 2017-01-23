@@ -152,6 +152,7 @@ module.exports = {
           action: 'Refunded',
           sold: '+' + row.added_money.toString()
         }
+        cb()
       }, function () {
         return next(undefined, rows)
       })
@@ -177,6 +178,7 @@ module.exports = {
           action: 'Send ' + row.how.toString() + ' to ' + row.to,
           sold: '-' + row.how.toString()
         }
+        cb()
       }, function () {
         return next(undefined, rows)
       })
