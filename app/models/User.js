@@ -146,7 +146,7 @@ module.exports = {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       // formatting
-      async.eachFor(rows, function (row, index, cb) {
+      async.eachOf(rows, function (row, index, cb) {
         rows[index] = {
           date: '2017-01-07 16:30:00',
           action: 'Refunded',
