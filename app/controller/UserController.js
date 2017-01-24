@@ -307,7 +307,7 @@ module.exports = {
         })
       })
     })
-  }
+  },
 
   findUsers: function (req, res) {
     if (!req.body || req.body.length === 0)
