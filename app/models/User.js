@@ -201,7 +201,7 @@ module.exports = {
       function (cb) {
         db.get('web_v6').query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `paysafecard__payment_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
           if (err) return cb(err)
-          if (rows === undefined || rows.length === 0) return next(undefined, [])
+          if (rows === undefined || rows.length === 0) return cb(undefined, [])
           // formatting
           async.eachOf(rows, function (row, index, callback) {
             rows[index] = {
@@ -219,7 +219,7 @@ module.exports = {
       function (cb) {
         db.get('web_v6').query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `shop__dedipass_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
           if (err) return cb(err)
-          if (rows === undefined || rows.length === 0) return next(undefined, [])
+          if (rows === undefined || rows.length === 0) return cb(undefined, [])
           // formatting
           async.eachOf(rows, function (row, index, callback) {
             rows[index] = {
@@ -237,7 +237,7 @@ module.exports = {
       function (cb) {
         db.get('web_v6').query("SELECT `credits` AS `added_points`, `created` AS `date` FROM `shopplus__stripe_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
           if (err) return cb(err)
-          if (rows === undefined || rows.length === 0) return next(undefined, [])
+          if (rows === undefined || rows.length === 0) return cb(undefined, [])
           // formatting
           async.eachOf(rows, function (row, index, callback) {
             rows[index] = {
@@ -260,7 +260,7 @@ module.exports = {
   getMoneyTransfers: function (id, next) {
     db.get('web_v6').query("SELECT `shop__points_transfer_histories`.`created` AS `date`, `shop__points_transfer_histories`.`points` AS `how`, `users`.`pseudo` AS `to` FROM `shop__points_transfer_histories` INNER JOIN `users` ON `users`.`id` = `shop__points_transfer_histories`.`user_id` WHERE `shop__points_transfer_histories`.`author_id` = ?", [id], function (err, rows, fields) {
       if (err) return next(err)
-      if (rows === undefined || rows.length === 0) return next(undefined, [])
+      if (rows === undefined || rows.length === 0) return cb(undefined, [])
       // formatting
       async.eachOf(rows, function (row, index, cb) {
         rows[index] = {
