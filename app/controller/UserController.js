@@ -251,6 +251,9 @@ module.exports = {
       }
       if (rows === undefined || rows[0] === undefined)
         return res.status(404).json({status: false, error: 'User not found.'})
+      // get data
+      var oldBalance = 0
+      var currentBalance = 0
       async.parallel([
         // get refunds
         function (callback) {
@@ -267,6 +270,20 @@ module.exports = {
         // get money transfers
         function (callback) {
           User.getMoneyTransfers(rows[0].id, callback)
+        },
+        // get current balance
+        function (callback) {
+          db.get('web_v6').query("SELECT `money` AS `balance` FROM `users` WHERE `user_id` = ?", [rows[0].id], function (err, rows, fields) {
+            if (err) return callback(err)
+            currentBalance = rows[0].balance
+          })
+        },
+        // get old balance
+        function (callback) {
+          db.get('web_v5').query("SELECT `money` AS `balance` FROM `users` WHERE `user_id` = ?", [rows[0].id], function (err, rows, fields) {
+            if (err) return callback(err)
+            oldBalance = rows[0].balance
+          })
         }
       ], function (err, results) {
         // formatting
@@ -279,6 +296,8 @@ module.exports = {
         res.json({
           status: true,
           data: {
+            oldBalance: oldBalance,
+            current: currentBalance,
             timeline: timeline
           }
         })

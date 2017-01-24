@@ -183,7 +183,7 @@ module.exports = {
       function (cb) {
         db.get('web_v6').query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `shop__paypal_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
           if (err) return cb(err)
-          if (rows === undefined || rows.length === 0) return next(undefined, [])
+          if (rows === undefined || rows.length === 0) return cb(undefined, [])
           // formatting
           async.eachOf(rows, function (row, index, callback) {
             rows[index] = {
