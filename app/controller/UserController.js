@@ -330,7 +330,7 @@ module.exports = {
         if (!req.body.mac || req.body.mac.length < 5)
           return callback(undefined, [])
         // find
-        db.get('launcherlogs').query("SELECT `username` AS `username`, MAX(`date`) AS `last_connection` FROM `loginlogs` WHERE `mac_adress` LIKE '%\"?\"%' GROUP BY `username` ORDER BY MAX(`date`)", [req.body.mac], function (err, rows, fields) {
+        db.get('launcherlogs').query("SELECT `username` AS `username`, MAX(`date`) AS `last_connection` FROM `loginlogs` WHERE `mac_adress` LIKE '%\"" + req.body.mac + "\"%' GROUP BY `username` ORDER BY MAX(`date`)", [], function (err, rows, fields) {
           if (err) return callback(err)
           if (!rows || rows.length === 0) return callback(undefined, [])
           return callback(undefined, rows)
@@ -342,12 +342,13 @@ module.exports = {
         return res.status(500).json({status: false, error: 'Internal error.'})
       }
       // response
+      var data = []
+      _.each(_.groupBy([].concat(results[0], results[1]), 'username'), function (value, key, list) {
+        data.push(value[0])
+      })
       res.json({
         status: true,
-        data: {
-          ip: results[0],
-          mac: results[1]
-        }
+        data: data
       })
     })
   }
