@@ -252,8 +252,6 @@ module.exports = {
       if (rows === undefined || rows[0] === undefined)
         return res.status(404).json({status: false, error: 'User not found.'})
       // get data
-      var oldBalance = 0
-      var currentBalance = 0
       async.parallel([
         // get refunds
         function (callback) {
@@ -273,19 +271,25 @@ module.exports = {
         },
         // get current balance
         function (callback) {
-          db.get('web_v6').query("SELECT `money` AS `balance` FROM `users` WHERE `user_id` = ?", [rows[0].id], function (err, rows, fields) {
+          db.get('web_v6').query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
             if (err) return callback(err)
-            currentBalance = rows[0].balance
+            callback(undefined, parseFloat(rows[0].balance))
           })
         },
         // get old balance
         function (callback) {
-          db.get('web_v5').query("SELECT `money` AS `balance` FROM `users` WHERE `user_id` = ?", [rows[0].id], function (err, rows, fields) {
+          db.get('web_v5').query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
             if (err) return callback(err)
-            oldBalance = rows[0].balance
+            callback(undefined, parseFloat(rows[0].balance))
           })
         }
       ], function (err, results) {
+        if (err) {
+          console.error(err)
+          return res.status(500).json({status: false, error: 'Internal error.'})
+        }
+        var oldBalance = results[4] || 0
+        var currentBalance = results[5] || 0
         // formatting
         var timeline = []
         timeline = timeline.concat(results[0], results[1], results[2], results[3])
