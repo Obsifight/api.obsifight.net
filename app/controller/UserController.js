@@ -309,4 +309,47 @@ module.exports = {
     })
   }
 
+  findUsers: function (req, res) {
+    if (!req.body || req.body.length === 0)
+      return res.status(400).json({status: false, error: 'Missing params.'})
+    // handle find
+    async.parallel([
+      // ip
+      function (callback) {
+        if (!req.body.ip || req.body.ip.length < 5)
+          return callback(undefined, [])
+        // find
+        db.get('launcherlogs').query("SELECT `username` AS `username`, MAX(`date`) AS `last_connection` FROM `loginlogs` WHERE `ip` = ? GROUP BY `username` ORDER BY MAX(`date`)", [req.body.ip], function (err, rows, fields) {
+          if (err) return callback(err)
+          if (!rows || rows.length === 0) return callback(undefined, [])
+          return callback(undefined, rows)
+        })
+      },
+      // mac
+      function (callback) {
+        if (!req.body.mac || req.body.mac.length < 5)
+          return callback(undefined, [])
+        // find
+        db.get('launcherlogs').query("SELECT `username` AS `username`, MAX(`date`) AS `last_connection` FROM `loginlogs` WHERE `mac_adress` LIKE '%\"?\"%' GROUP BY `username` ORDER BY MAX(`date`)", [req.body.mac], function (err, rows, fields) {
+          if (err) return callback(err)
+          if (!rows || rows.length === 0) return callback(undefined, [])
+          return callback(undefined, rows)
+        })
+      }
+    ], function (err, results) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      // response
+      res.json({
+        status: true,
+        data: {
+          ip: results[0],
+          mac: results[1]
+        }
+      })
+    })
+  }
+
 }
