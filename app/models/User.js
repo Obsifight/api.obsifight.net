@@ -178,7 +178,83 @@ module.exports = {
   },
 
   getMoneyPurchases: function (id, next) {
-    next(undefined, [])
+    async.parallel([
+      // paypal
+      function (cb) {
+        db.get('web_v6').query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `shop__paypal_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+          if (err) return next(err)
+          if (rows === undefined || rows.length === 0) return next(undefined, [])
+          // formatting
+          async.eachOf(rows, function (row, index, cb) {
+            rows[index] = {
+              date: row.date,
+              action: 'Pay with Paypal',
+              sold: '+' + row.added_points.toString()
+            }
+            cb()
+          }, function () {
+            return next(undefined, rows)
+          })
+        })
+      },
+      // paysafecard
+      function (cb) {
+        db.get('web_v6').query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `paysafecard__payment_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+          if (err) return next(err)
+          if (rows === undefined || rows.length === 0) return next(undefined, [])
+          // formatting
+          async.eachOf(rows, function (row, index, cb) {
+            rows[index] = {
+              date: row.date,
+              action: 'Pay with paysafecard',
+              sold: '+' + row.added_points.toString()
+            }
+            cb()
+          }, function () {
+            return next(undefined, rows)
+          })
+        })
+      },
+      // dedipass
+      function (cb) {
+        db.get('web_v6').query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `shop__dedipass_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+          if (err) return next(err)
+          if (rows === undefined || rows.length === 0) return next(undefined, [])
+          // formatting
+          async.eachOf(rows, function (row, index, cb) {
+            rows[index] = {
+              date: row.date,
+              action: 'Pay with Dédipass',
+              sold: '+' + row.added_points.toString()
+            }
+            cb()
+          }, function () {
+            return next(undefined, rows)
+          })
+        })
+      },
+      // stripe
+      function (cb) {
+        db.get('web_v6').query("SELECT `credits` AS `added_points`, `created` AS `date` FROM `shopplus__stripe_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+          if (err) return next(err)
+          if (rows === undefined || rows.length === 0) return next(undefined, [])
+          // formatting
+          async.eachOf(rows, function (row, index, cb) {
+            rows[index] = {
+              date: row.date,
+              action: 'Pay with Stripe',
+              sold: '+' + row.added_points.toString()
+            }
+            cb()
+          }, function () {
+            return next(undefined, rows)
+          })
+        })
+      }
+    ], function (err, results) {
+      if (err) return next(err)
+      next(undefined, [].concat(results[0], results[1], results[2], results[3]))
+    })
   },
 
   getMoneyTransfers: function (id, next) {
