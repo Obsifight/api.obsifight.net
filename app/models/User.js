@@ -149,7 +149,9 @@ module.exports = {
       async.eachOf(rows, function (row, index, cb) {
         rows[index] = {
           date: new Date('2017-01-07 16:30:00'),
-          action: 'Refunded',
+          action_id: 'refund',
+          action_type: 'add',
+          action_message: 'Refunded',
           sold: '+' + row.added_money.toString()
         }
         cb()
@@ -167,7 +169,9 @@ module.exports = {
       async.eachOf(rows, function (row, index, cb) {
         rows[index] = {
           date: row.date,
-          action: 'Buy ' + row.item_name,
+          action_id: 'purchase_item',
+          action_type: 'remove',
+          action_message: 'Buy ' + row.item_name,
           sold: '-' + row.price.toString()
         }
         cb()
@@ -188,7 +192,9 @@ module.exports = {
           async.eachOf(rows, function (row, index, callback) {
             rows[index] = {
               date: row.date,
-              action: 'Pay with Paypal',
+              action_id: 'purchase_money_paypal',
+              action_type: 'add',
+              action_message: 'Pay with Paypal',
               sold: '+' + row.added_points.toString()
             }
             callback()
@@ -206,7 +212,9 @@ module.exports = {
           async.eachOf(rows, function (row, index, callback) {
             rows[index] = {
               date: row.date,
-              action: 'Pay with paysafecard',
+              action_id: 'purchase_money_paysafecard',
+              action_type: 'add',
+              action_message: 'Pay with paysafecard',
               sold: '+' + row.added_points.toString()
             }
             callback()
@@ -224,7 +232,9 @@ module.exports = {
           async.eachOf(rows, function (row, index, callback) {
             rows[index] = {
               date: row.date,
-              action: 'Pay with Dédipass',
+              action_id: 'purchase_money_dedipass',
+              action_type: 'add',
+              action_message: 'Pay with Dédipass',
               sold: '+' + row.added_points.toString()
             }
             callback()
@@ -242,7 +252,9 @@ module.exports = {
           async.eachOf(rows, function (row, index, callback) {
             rows[index] = {
               date: row.date,
-              action: 'Pay with Stripe',
+              action_id: 'purchase_money_stripe',
+              action_type: 'add',
+              action_message: 'Pay with Stripe',
               sold: '+' + row.added_points.toString()
             }
             callback()
@@ -265,7 +277,9 @@ module.exports = {
       async.eachOf(rows, function (row, index, cb) {
         rows[index] = {
           date: row.date,
-          action: 'Send ' + row.how.toString() + ' to ' + row.to,
+          action_id: 'transfer',
+          action_type: 'remove',
+          action_message: 'Send ' + row.how.toString() + ' to ' + row.to,
           sold: '-' + row.how.toString()
         }
         cb()
