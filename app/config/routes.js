@@ -12,6 +12,8 @@ module.exports = {
   'get /user/:username/vote/can': 'UserController.canVote',
   'get /users/staff/:premium?': 'UserController.getStaff',
 
+  'post /user/find': {'function': 'UserController.findUsers', protected: true},
+
   'get /sanction/bans': {'function': 'SanctionController.getBans', protected: true},
   'get /sanction/bans/:id': {'function': 'SanctionController.getBan', protected: true},
   'post /sanction/bans': {'function': 'SanctionController.addBan', protected: true},
