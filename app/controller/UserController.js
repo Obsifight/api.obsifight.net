@@ -288,8 +288,8 @@ module.exports = {
           console.error(err)
           return res.status(500).json({status: false, error: 'Internal error.'})
         }
-        var oldBalance = results[4] || 0
-        var currentBalance = results[5] || 0
+        var oldBalance = results[5] || 0
+        var currentBalance = results[4] || 0
         // formatting
         var timeline = []
         timeline = timeline.concat(results[0], results[1], results[2], results[3])
