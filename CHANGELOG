@@ -1,3 +1,9 @@
+1.0.0-alpha.9.3
+- Fix bug when get balance on old version
+
+1.0.0-alpha.9.2
+- Add transfers money receive
+
 1.0.0-alpha.9.1
 - Fix money/timeline balance bug
 

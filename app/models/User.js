@@ -287,6 +287,26 @@ module.exports = {
         return next(undefined, rows)
       })
     })
+  },
+
+  getMoneyTransfersFromOthers: function (id, next) {
+    db.get('web_v6').query("SELECT `shop__points_transfer_histories`.`created` AS `date`, `shop__points_transfer_histories`.`points` AS `how`, `users`.`pseudo` AS `from` FROM `shop__points_transfer_histories` INNER JOIN `users` ON `users`.`id` = `shop__points_transfer_histories`.`author_id` WHERE `shop__points_transfer_histories`.`user_id` = ?", [id], function (err, rows, fields) {
+      if (err) return next(err)
+      if (rows === undefined || rows.length === 0) return next(undefined, [])
+      // formatting
+      async.eachOf(rows, function (row, index, cb) {
+        rows[index] = {
+          date: row.date,
+          action_id: 'transfer',
+          action_type: 'add',
+          action_message: 'Receive ' + row.how.toString() + ' from ' + row.from,
+          sold: '+' + row.how.toString()
+        }
+        cb()
+      }, function () {
+        return next(undefined, rows)
+      })
+    })
   }
 
 }

@@ -269,6 +269,10 @@ module.exports = {
         function (callback) {
           User.getMoneyTransfers(rows[0].id, callback)
         },
+        // get money transfers to him
+        function (callback) {
+          User.getMoneyTransfersFromOthers(rows[0].id, callback)
+        },
         // get current balance
         function (callback) {
           db.get('web_v6').query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
@@ -280,6 +284,7 @@ module.exports = {
         function (callback) {
           db.get('web_v5').query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
             if (err) return callback(err)
+            if (!rows[0]) return callback(undefined, 0.0)
             callback(undefined, parseFloat(rows[0].balance))
           })
         }
@@ -288,11 +293,11 @@ module.exports = {
           console.error(err)
           return res.status(500).json({status: false, error: 'Internal error.'})
         }
-        var oldBalance = results[5] || 0
-        var currentBalance = results[4] || 0
+        var oldBalance = results[6] || 0
+        var currentBalance = results[5] || 0
         // formatting
         var timeline = []
-        timeline = timeline.concat(results[0], results[1], results[2], results[3])
+        timeline = timeline.concat(results[0], results[1], results[2], results[3], results[4])
         timeline.sort(function(a,b) {
           return new Date(b.date).getTime() - new Date(a.date).getTime()
         })
