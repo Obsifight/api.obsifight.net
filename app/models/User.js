@@ -300,7 +300,7 @@ module.exports = {
           action_id: 'transfer',
           action_type: 'add',
           action_message: 'Receive ' + row.how.toString() + ' from ' + row.from,
-          sold: '-' + row.how.toString()
+          sold: '+' + row.how.toString()
         }
         cb()
       }, function () {
