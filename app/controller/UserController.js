@@ -269,6 +269,10 @@ module.exports = {
         function (callback) {
           User.getMoneyTransfers(rows[0].id, callback)
         },
+        // get money transfers to him
+        function (callback) {
+          User.getMoneyTransfersFromOthers(rows[0].id, callback)
+        },
         // get current balance
         function (callback) {
           db.get('web_v6').query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
