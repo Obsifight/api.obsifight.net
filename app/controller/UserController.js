@@ -359,7 +359,7 @@ module.exports = {
   },
 
   getUsersInfos: function (req, res) {
-    if (!req.body || req.body.length === 0 || req.body.ids.length === 0)
+    if (!req.body || req.body.length === 0 || !req.body.ids || req.body.ids.length === 0)
       return res.status(400).json({status: false, error: 'Missing params.'})
     // parse
     var list = _.map(req.body.ids, function (id) {
@@ -375,7 +375,7 @@ module.exports = {
       // each
       var users = {}
       for (var key in rows) {
-        if (object.hasOwnProperty(key)) {
+        if (rows.hasOwnProperty(key)) {
           users[rows[key].id] = rows[key].username
         }
       }
