@@ -4,6 +4,7 @@ module.exports = {
 
   'get /user/:username': {'function': 'UserController.get', protected: true},
   'get /user/from/uuid/:uuid': {'function': 'UserController.getFromUUID', protected: true},
+  'get /user/uuid/from/:username': {'function': 'UserController.getUUIDFromUsername', protected: true},
   'post /user/authenticate': {'function': 'UserController.authenticate', protected: true},
   'get /user/:username/sanctions': {'function': 'SanctionController.getUserSanctions', protected: true},
   'get /user/:username/sanctions/banned': {'function': 'SanctionController.isUserBanned', protected: true},
