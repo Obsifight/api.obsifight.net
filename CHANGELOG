@@ -1,3 +1,6 @@
+1.0.1
+- Add GET /user/uuid/from/:username
+
 1.0.0
 - Add POST /user/infos/username
 

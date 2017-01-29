@@ -124,6 +124,24 @@ module.exports = {
     })
   },
 
+  getUUIDFromUsername: function (req, res) {
+    if (req.params.username === undefined)
+      return res.status(400).json({status: false, error: 'Missing uuid.'})
+
+    User.getUUIDFromUsername(req.params.username, function (err, data) {
+      if (err) {
+        console.error(err)
+        return res.status(404).json({status: false, error: 'User not found.'})
+      }
+      res.json({
+        status: true,
+        data: {
+          uuid: data.uuid_formatted
+        }
+      })
+    })
+  },
+
   canVote: function (req, res) {
     if (req.params.username === undefined)
       return res.status(400).json({status: false, error: 'Missing user\'s name.'})
