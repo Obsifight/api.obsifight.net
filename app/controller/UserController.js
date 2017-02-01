@@ -393,7 +393,7 @@ module.exports = {
           return uuid
       })
       var dbName = 'auth'
-      var req = "SELECT `profileid` AS `id`, `user_pseudo` AS `username` FROM `joueurs` WHERE `profileid` IN(" + list.join() + ")"
+      var req = "SELECT `profileid` AS `id`, `user_pseudo` AS `username` FROM `joueurs` WHERE `profileid` IN('" + list.join("', '") + "')"
     }
     // query
     db.get(dbName).query(req, function (err, rows, fields) {
