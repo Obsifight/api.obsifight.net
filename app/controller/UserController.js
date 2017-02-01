@@ -377,15 +377,26 @@ module.exports = {
   },
 
   getUsersInfos: function (req, res) {
-    if (!req.body || req.body.length === 0 || !req.body.ids || req.body.ids.length === 0)
+    if (!req.body || req.body.length === 0 || ((!req.body.ids || req.body.ids.length === 0) && (!req.body.uuids || req.body.uuids.length === 0)))
       return res.status(400).json({status: false, error: 'Missing params.'})
     // parse
-    var list = _.map(req.body.ids, function (id) {
-      if (id == parseInt(id))
-        return parseInt(id)
-    })
+    if (req.body.ids) {
+      var list = _.map(req.body.ids, function (id) {
+        if (id == parseInt(id))
+          return parseInt(id)
+      })
+      var dbName = 'web_v6'
+      var req = "SELECT `id` AS `id`, `pseudo` AS `username` FROM `users` WHERE `id` IN(" + list.join() + ")"
+    } else {
+      var list = _.map(req.body.uuids, function (uuid) {
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.exec(uuid))
+          return uuid
+      })
+      var dbName = 'auth'
+      var req = "SELECT `profileid` AS `id`, `user_pseudo` AS `username` FROM `users` WHERE `profileid` IN(" + list.join() + ")"
+    }
     // query
-    db.get('web_v6').query("SELECT `id` AS `id`, `pseudo` AS `username` FROM `users` WHERE `id` IN(" + list.join() + ")", function (err, rows, fields) {
+    db.get(dbName).query(req, function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
