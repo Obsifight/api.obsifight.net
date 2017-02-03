@@ -416,7 +416,7 @@ module.exports = {
         }
       })
     })
-  }
+  },
 
   getStats: function (req, res) {
     res.json({
