@@ -12,6 +12,7 @@ module.exports = {
   'get /user/:username/money/timeline': {'function': 'UserController.getMoneyTimeline', protected: true},
   'get /user/:username/vote/can': 'UserController.canVote',
   'get /users/staff/:premium?': 'UserController.getStaff',
+  'get /user/:username/stats': {'function': 'UserController.getStats', protected: true},
 
   'post /user/find': {'function': 'UserController.findUsers', protected: true},
   'post /user/infos/username': {'function': 'UserController.getUsersInfos', protected: true},

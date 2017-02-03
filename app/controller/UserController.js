@@ -416,6 +416,34 @@ module.exports = {
         }
       })
     })
+  },
+
+  getStats: function (req, res) {
+    res.json({
+      status: true,
+      data: {
+        lastLogin: {
+          launcher: {
+            id: 330,
+            username: "Eywek",
+            ip: "127.0.0.1",
+            date: "2015-02-12T17:20:34.000Z",
+            mac_adress: null
+          },
+          ingame: {
+            id: 1033,
+            date: "2015-02-12T17:22:10.000Z",
+            location: ['-103', '29', '1034']
+          }
+        },
+        ks: {
+          kills: 0,
+          deaths: 0,
+          ratio: 0
+        },
+        register_date: "2015-01-24T10:19:45.000Z"
+      }
+    })
   }
 
 }

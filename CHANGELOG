@@ -1,3 +1,6 @@
+1.0.3
+- Remove /user/authenticate log
+
 1.0.2
 - Add find with uuid from POST /user/infos/username
 

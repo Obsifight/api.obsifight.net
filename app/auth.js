@@ -16,7 +16,8 @@ module.exports = function (req, res, next) {
     next()
 
     // add into history
-    db.get('api').query("INSERT INTO api_histories SET `user_id` = ?, `action` = ?, `body` = ?, `accessToken` = ?, `createdAt` = ?", [parseInt(decoded.id), req.method+' '+req.originalUrl, JSON.stringify(req.body), req.headers.authorization, (new Date)], function (err, rows, fields) {
+    var body = (req.originalUrl != '/user/authenticate') ? JSON.stringify(req.body) : 'Private.'
+    db.get('api').query("INSERT INTO api_histories SET `user_id` = ?, `action` = ?, `body` = ?, `accessToken` = ?, `createdAt` = ?", [parseInt(decoded.id), req.method+' '+req.originalUrl, body, req.headers.authorization, (new Date)], function (err, rows, fields) {
       if (err) console.error(err)
     })
   })
