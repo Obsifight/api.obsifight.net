@@ -305,6 +305,18 @@ module.exports = {
             if (!rows[0]) return callback(undefined, 0.0)
             callback(undefined, parseFloat(rows[0].balance))
           })
+        },
+        // get money from youtube videos
+        function (callback) {
+          User.getYoutubeRemunerations(rows[0].id, callback)
+        },
+        // get money from market
+        function (callback) {
+          User.getMarketPurchases(rows[0].id, callback)
+        },
+        // get money from market
+        function (callback) {
+          User.getMarketSales(rows[0].id, callback)
         }
       ], function (err, results) {
         if (err) {
@@ -315,7 +327,7 @@ module.exports = {
         var currentBalance = results[5] || 0
         // formatting
         var timeline = []
-        timeline = timeline.concat(results[0], results[1], results[2], results[3], results[4])
+        timeline = timeline.concat(results[0], results[1], results[2], results[3], results[4], results[7], results[8], results[9])
         timeline.sort(function(a,b) {
           return new Date(b.date).getTime() - new Date(a.date).getTime()
         })

@@ -307,6 +307,66 @@ module.exports = {
         return next(undefined, rows)
       })
     })
+  },
+
+  getYoutubeRemunerations: function (id, next) {
+    db.get('web_v6').query("SELECT `obsi__youtube_videos_remuneration_histories`.`title` AS `title`, `obsi__youtube_videos_remuneration_histories`.`remuneration` AS `remuneration`, `obsi__youtube_videos_remuneration_histories`.`created` AS `date` FROM `obsi__youtube_videos_remuneration_histories` INNER JOIN `obsi__youtube_channels` ON `obsi__youtube_videos_remuneration_histories`.`channel_id` = `obsi__youtube_channels`.`youtube_channel_id` WHERE `obsi__youtube_channels`.`user_id` = ?", [id], function (err, rows, fields) {
+      if (err) return next(err)
+      if (rows === undefined || rows.length === 0) return next(undefined, [])
+      // formatting
+      async.eachOf(rows, function (row, index, cb) {
+        rows[index] = {
+          date: row.date,
+          action_id: 'youtube_remuneration',
+          action_type: 'add',
+          action_message: 'Receive ' + row.remuneration.toString() + ' for "' + row.title + '"',
+          sold: '+' + row.remuneration.toString()
+        }
+        cb()
+      }, function () {
+        return next(undefined, rows)
+      })
+    })
+  },
+
+  getMarketPurchases: function (id, next) {
+    db.get('web_v6').query("SELECT `playermarket__purchase_histories`.`price` AS `price`,`playermarket__purchase_histories`.`created` AS `date`, `users`.`pseudo` AS `seller_username` FROM `playermarket__purchase_histories` INNER JOIN `users` ON `users`.`id` = `playermarket__purchase_histories`.`seller_id` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+      if (err) return next(err)
+      if (rows === undefined || rows.length === 0) return next(undefined, [])
+      // formatting
+      async.eachOf(rows, function (row, index, cb) {
+        rows[index] = {
+          date: row.date,
+          action_id: 'webmarket',
+          action_type: 'remove',
+          action_message: 'Purchase from ' + row.seller_username + ' for ' + row.price.toString(),
+          sold: '-' + row.price.toString()
+        }
+        cb()
+      }, function () {
+        return next(undefined, rows)
+      })
+    })
+  },
+
+  getMarketSales: function (id, next) {
+    db.get('web_v6').query("SELECT  `playermarket__purchase_histories`.`price` AS  `price` ,  `playermarket__purchase_histories`.`created` AS  `date` ,  `users`.`pseudo` AS  `buyer_username` FROM  `playermarket__purchase_histories` INNER JOIN  `users` ON  `users`.`id` =  `playermarket__purchase_histories`.`user_id` WHERE  `seller_id` = ?", [id], function (err, rows, fields) {
+      if (err) return next(err)
+      if (rows === undefined || rows.length === 0) return next(undefined, [])
+      // formatting
+      async.eachOf(rows, function (row, index, cb) {
+        rows[index] = {
+          date: row.date,
+          action_id: 'webmarket',
+          action_type: 'add',
+          action_message: 'Sale for ' + row.price.toString() + ' to ' + row.buyer_username,
+          sold: '+' + row.price.toString()
+        }
+        cb()
+      }, function () {
+        return next(undefined, rows)
+      })
+    })
   }
 
 }
