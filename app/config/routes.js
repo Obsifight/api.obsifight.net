@@ -16,6 +16,7 @@ module.exports = {
 
   'post /user/find': {'function': 'UserController.findUsers', protected: true},
   'post /user/infos/username': {'function': 'UserController.getUsersInfos', protected: true},
+  'get /user/compare/:username1/:username2': {'function': 'UserController.compareUsers', protected: true},
 
   'get /sanction/bans': {'function': 'SanctionController.getBans', protected: true},
   'get /sanction/bans/:id': {'function': 'SanctionController.getBan', protected: true},
