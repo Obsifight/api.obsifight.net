@@ -528,30 +528,50 @@ module.exports = {
   },
 
   getStats: function (req, res) {
-    res.json({
-      status: true,
-      data: {
-        lastLogin: {
-          launcher: {
-            id: 330,
-            username: "Eywek",
-            ip: "127.0.0.1",
-            date: "2015-02-12T17:20:34.000Z",
-            mac_adress: null
-          },
-          ingame: {
-            id: 1033,
-            date: "2015-02-12T17:22:10.000Z",
-            location: ['-103', '29', '1034']
-          }
-        },
-        ks: {
-          kills: 0,
-          deaths: 0,
-          ratio: 0
-        },
-        register_date: "2015-01-24T10:19:45.000Z"
+    if (req.params.username === undefined)
+      return res.status(400).json({status: false, error: 'Missing user\'s name.'})
+
+    async.parallel([
+      // get kills
+      function (callback) {
+        db.get('playerlogger').query("SELECT `data` AS `killed` FROM `playerlogger` WHERE `type` = 'kill' AND playername = ?", [req.params.username], function (err, rows, fields) {
+          if (err)
+            return callback(err)
+          callback(undefined, rows.map(function (row) {
+            return row.killed
+          }))
+        })
+      },
+      // get deaths
+      function (callback) {
+        db.get('playerlogger').query("SELECT `data` AS `killer` FROM `playerlogger` WHERE `type` = 'killedby' AND playername = ?", [req.params.username], function (err, rows, fields) {
+          if (err)
+            return callback(err)
+          callback(undefined, rows.map(function (row) {
+            return row.killer
+          }))
+        })
       }
+    ], function (err, results) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      // result
+      res.json({
+        status: true,
+        data: {
+          ks: {
+            kills: results[0].length,
+            deaths: results[1].length,
+            ratio: (results[1].length > 0) ? results[0].length / results[1].length : results[0].length
+          },
+          history: {
+            kills: results[0],
+            deaths: results[1]
+          }
+        }
+      })
     })
   }
 
