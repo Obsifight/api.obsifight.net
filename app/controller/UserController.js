@@ -430,6 +430,49 @@ module.exports = {
     })
   },
 
+  compareUsers: function (req, res) {
+    if (req.params.username1 === undefined || req.params.username2 === undefined)
+      return res.status(400).json({status: false, error: 'Missing user\'s names.'})
+    var user1 = req.params.username1
+    var user2 = req.params.username2
+    // Get connections
+    db.get('launcherlogs').query('(SELECT `ip`, `username` FROM `loginlogs` AS  `user_1` WHERE `user_1`.`username` = ? GROUP BY `ip`) UNION (SELECT  `ip`, `username` FROM  `loginlogs` WHERE `username` = ? GROUP BY `ip`)', [user1, user2], function (err, rows, fields) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      var connections = {}
+      connections[user1] = []
+      connections[user2] = []
+      // each connections, order by username
+      for (var i = 0; i < rows.length; i++) {
+        connections[rows[i].username].push(rows[i].ip)
+      }
+      // count
+      var user1IPCount = connections[user1].length
+      var user2IPCount = connections[user2].length
+      // commun
+      var commonIP = _.intersection(connections[user1], connections[user2])
+      var commonIPCount = commonIP.length
+      // percentage
+      if (commonIPCount > 0) {
+        if (user1IPCount > user2IPCount) // user 1 have more IP than user 2
+          var percentage = (commonIPCount * 100) / user2IPCount // calcul percentage with user who have less IP
+        else
+          var percentage = (commonIPCount * 100) / user1IPCount // calcul percentage with user who have less IP
+      } else {
+        percentage = 0
+      }
+      // result
+      res.json({
+        status: true,
+        data: {
+          commonIPPercentage: percentage
+        }
+      })
+    })
+  },
+
   getStats: function (req, res) {
     res.json({
       status: true,
