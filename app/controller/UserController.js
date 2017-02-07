@@ -435,39 +435,93 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Missing user\'s names.'})
     var user1 = req.params.username1
     var user2 = req.params.username2
-    // Get connections
-    db.get('launcherlogs').query('(SELECT `ip`, `username` FROM `loginlogs` AS  `user_1` WHERE `user_1`.`username` = ? GROUP BY `ip`) UNION (SELECT  `ip`, `username` FROM  `loginlogs` WHERE `username` = ? GROUP BY `ip`)', [user1, user2], function (err, rows, fields) {
+    async.parallel([
+      // ip
+      function (callback) {
+        // Get connections
+        db.get('launcherlogs').query('(SELECT `ip`, `username` FROM `loginlogs` AS  `user_1` WHERE `user_1`.`username` = ? GROUP BY `ip`) UNION (SELECT  `ip`, `username` FROM  `loginlogs` WHERE `username` = ? GROUP BY `ip`)', [user1, user2], function (err, rows, fields) {
+          if (err)
+            return callback(err)
+          var connections = {}
+          connections[user1] = []
+          connections[user2] = []
+          // each connections, order by username
+          for (var i = 0; i < rows.length; i++) {
+            connections[rows[i].username].push(rows[i].ip)
+          }
+          // count
+          var user1IPCount = connections[user1].length
+          var user2IPCount = connections[user2].length
+          // commun
+          var commonIP = _.intersection(connections[user1], connections[user2])
+          var commonIPCount = commonIP.length
+          // percentage
+          if (commonIPCount > 0) {
+            if (user1IPCount > user2IPCount) // user 1 have more IP than user 2
+              var percentage = (commonIPCount * 100) / user2IPCount // calcul percentage with user who have less IP
+            else
+              var percentage = (commonIPCount * 100) / user1IPCount // calcul percentage with user who have less IP
+          } else {
+            percentage = 0
+          }
+          callback(undefined, percentage)
+        })
+      },
+      // mac
+      function (callback) {
+        // Get connections
+        db.get('launcherlogs').query('(SELECT `mac_adress`, `username` FROM `loginlogs` AS  `user_1` WHERE `user_1`.`username` = ? GROUP BY `mac_adress`) UNION (SELECT  `mac_adress`, `username` FROM  `loginlogs` WHERE `username` = ? GROUP BY `mac_adress`)', [user1, user2], function (err, rows, fields) {
+          if (err)
+            return callback(err)
+          var connections = {}
+          connections[user1] = []
+          connections[user2] = []
+          // each connections, order by username
+          var mac
+          for (var i = 0; i < rows.length; i++) {
+            mac = rows[i].mac_adress
+            if (!mac) continue // NULL
+            try {
+              mac = JSON.parse(mac)
+            } catch (e) {
+              console.error(e)
+              continue
+            }
+            for (var k = 0; k < mac.length; k++) {
+              if (connections[rows[i].username].indexOf(mac[k]) != -1)
+                continue // already in array
+              connections[rows[i].username].push(mac[k])
+            }
+          }
+          // count
+          var user1MACCount = connections[user1].length
+          var user2MACCount = connections[user2].length
+          // commun
+          var commonMAC = _.intersection(connections[user1], connections[user2])
+          var commonMACCount = commonMAC.length
+          // percentage
+          if (commonMACCount > 0) {
+            if (user1MACCount > user2MACCount) // user 1 have more MAC than user 2
+              var percentage = (commonMACCount * 100) / user2MACCount // calcul percentage with user who have less MAC
+            else
+              var percentage = (commonMACCount * 100) / user1MACCount // calcul percentage with user who have less MAC
+          } else {
+            percentage = 0
+          }
+          callback(undefined, percentage)
+        })
+      }
+    ], function (err, result) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
-      }
-      var connections = {}
-      connections[user1] = []
-      connections[user2] = []
-      // each connections, order by username
-      for (var i = 0; i < rows.length; i++) {
-        connections[rows[i].username].push(rows[i].ip)
-      }
-      // count
-      var user1IPCount = connections[user1].length
-      var user2IPCount = connections[user2].length
-      // commun
-      var commonIP = _.intersection(connections[user1], connections[user2])
-      var commonIPCount = commonIP.length
-      // percentage
-      if (commonIPCount > 0) {
-        if (user1IPCount > user2IPCount) // user 1 have more IP than user 2
-          var percentage = (commonIPCount * 100) / user2IPCount // calcul percentage with user who have less IP
-        else
-          var percentage = (commonIPCount * 100) / user1IPCount // calcul percentage with user who have less IP
-      } else {
-        percentage = 0
       }
       // result
       res.json({
         status: true,
         data: {
-          commonIPPercentage: percentage
+          commonIPPercentage: result[0],
+          commonMACPercentage: result[1]
         }
       })
     })

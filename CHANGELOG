@@ -1,3 +1,6 @@
+1.2.0
+- Add /user/compare/:username1/:username2 with commons IP/MAC adresses between 2 accounts
+
 1.1.0
 - Add webmarket + youtube remunerations for money timeline
 
