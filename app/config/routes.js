@@ -25,5 +25,8 @@ module.exports = {
   'get /sanction/mutes': {'function': 'SanctionController.getMutes', protected: true},
   'get /sanction/mutes/:id': {'function': 'SanctionController.getMute', protected: true},
   'post /sanction/mutes': {'function': 'SanctionController.addMute', protected: true},
-  'put /sanction/mutes/:id': {'function': 'SanctionController.editMute', protected: true}
+  'put /sanction/mutes/:id': {'function': 'SanctionController.editMute', protected: true},
+
+  'get /socials/twitter/authorization/request': {'function': 'Socials/TwitterController.requestAuthorization', protected: false},
+  'post /socials/twitter/authorization/response': {'function': 'Socials/TwitterController.requestResponse', protected: true}
 }
