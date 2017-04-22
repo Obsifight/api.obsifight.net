@@ -16,6 +16,25 @@ var app = express()
 app.use(express.static('public'))
 
 // =======================
+// Sessions (optionnal) ==
+// =======================
+var session = require('express-session')
+app.set('trust proxy', 1) // trust first proxy
+var sessionHandler = session({
+  secret: 'oGKdTGBHmCQgB4UNme',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false }
+})
+
+app.use(function(req, res, next) {
+  if (req.path.indexOf('/socials/twitter') !== -1) {
+    return sessionHandler(req, res, next)
+  }
+  next()
+})
+
+// =======================
 // Body & Accept =========
 // =======================
 var bodyParser = require('body-parser')
