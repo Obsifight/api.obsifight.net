@@ -73,7 +73,7 @@ app.use(function (req, res, next) {
 
 var auth = require('./app/auth')
 global.config = require('./app/config/global')
-global.config.host = (process.env.NODE_ENV === 'production') ? 'https://api.obsifight.net' : 'http://localhost:' + config.port
+global.config.host = (process.env.NODE_ENV === 'production') ? 'http://api.obsifight.net' : 'http://localhost:' + config.port
 
 // =======================
 // routes ================
