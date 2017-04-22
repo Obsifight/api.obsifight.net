@@ -8,6 +8,7 @@
     "bluebird": "^3.5.0",
     "body-parser": "^1.15.2",
     "express": "^4.15.2",
+    "express-session": "^1.15.2",
     "jsonwebtoken": "^7.1.9",
     "mysql": "^2.11.1",
     "node-twitter-api": "^1.8.0",
