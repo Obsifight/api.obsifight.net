@@ -90,8 +90,8 @@ module.exports = {
               }
             },
             function (err, response, body) {
-              if (err)
-                console.error(err)
+              if (err || response.statusCode !== 200)
+                console.error(err || body)
             })
             // redirect to callback (stored in session) with informations
             res.redirect(callback + '?screen_name=' + user.screen_name + '&id=' + user.id)
