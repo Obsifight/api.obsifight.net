@@ -1,3 +1,6 @@
+1.6.0
+- Edit Twitter authorization process (use notification instead of save into database)
+
 1.5.0
 - Add GET /socials/twitter/authorization process
 
