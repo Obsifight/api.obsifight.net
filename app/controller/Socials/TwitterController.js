@@ -5,12 +5,13 @@ var twitter = new Twitter({
   callback: config.host + '/socials/twitter/authorization/response'
 })
 var crypto = require('crypto')
+var request = require('request')
 
 module.exports = {
 
   requestAuthorization: function (req, res) {
     // check request
-    if (!req.query || !req.query.userId || req.query.userId.length <= 0 || !req.query.callback || req.query.callback.length <= 0 || !req.query.authKey || req.query.authKey.length <= 0)
+    if (!req.query || !req.query.userId || req.query.userId.length <= 0 || !req.query.callback || req.query.callback.length <= 0 || !req.query.notification || req.query.notification.length <= 0 || !req.query.authKey || req.query.authKey.length <= 0)
       return res.status(400).json({status: false, error: 'Invalid request.'})
     // check authencity of user id
     db.get('web_v6').query('SELECT password FROM users WHERE id = ? LIMIT 1', [req.query.userId], function (err, row, fields) {
@@ -34,7 +35,9 @@ module.exports = {
           req.session.twitter = {
             userId: req.query.userId,
             requestSecret: requestSecret,
-            callback: req.query.callback
+            callback: req.query.callback,
+            notification: req.query.notification,
+            authKey: req.query.authKey
           }
           req.session.save()
           // redirect user
@@ -52,11 +55,13 @@ module.exports = {
     var requestToken = req.query.oauth_token
     var verifier = req.query.oauth_verifier
     // check session
-    if (!req.session || !req.session.twitter || Object.keys(req.session.twitter).length !== 3)
+    if (!req.session || !req.session.twitter || Object.keys(req.session.twitter).length !== 5)
       return res.status(400).json({status: false, error: 'Invalid session.'})
     var requestSecret = req.session.twitter.requestSecret
     var userId = req.session.twitter.userId
     var callback = req.session.twitter.callback
+    var notification = req.session.twitter.notification
+    var authKey = req.session.twitter.authKey
 
     // get access token
     twitter.getAccessToken(requestToken, requestSecret, verifier, function(err, accessToken, accessSecret) {
@@ -70,21 +75,23 @@ module.exports = {
             console.error(err)
             res.status(500).json({status: false, error: 'Internal error on check credentials with Twitter.'})
           } else {
-            // save twitter screen_name & id into database
-            db.get('web_v6').query('SELECT id FROM obsi__users_twitters WHERE user_id = ?', [userId], function (err, row) {
+            // clear session
+            req.session.twitter = {}
+            // send notification
+            request({
+              method: 'POST',
+              uri: notification,
+              json: {
+                accessToken: accessToken,
+                accessSecret: accessSecret,
+                user: user,
+                userId: userId,
+                authKey: authKey
+              }
+            },
+            function (err, response, body) {
               if (err)
                 console.error(err)
-              // delete if already link
-              if (row.length > 0)
-                db.get('web_v6').query('DELETE FROM obsi__users_twitters WHERE id = ?', [row[0].id], function (err) {
-                  if (err)
-                    console.error(err)
-                })
-              // add
-              db.get('web_v6').query('INSERT INTO obsi__users_twitters SET user_id = ?, twitter_id = ?, screen_name = ?, created = ?', [userId, user.id, user.screen_name, (new Date())], function (err) {
-                if (err)
-                  console.error(err)
-              })
             })
             // redirect to callback (stored in session) with informations
             res.redirect(callback + '?screen_name=' + user.screen_name + '&id=' + user.id)
