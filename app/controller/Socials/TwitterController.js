@@ -4,6 +4,13 @@ var twitter = new Twitter({
   consumerSecret: 'g3IJh1SOhOLOnGr4hKJWbuVo80jJfNwI2woLKiyLURgqOzlWmF',
   callback: config.host + '/socials/twitter/authorization/response'
 })
+var TwitterClient = require('twitter')
+var twitterClient = new TwitterClient({
+  consumer_key: 'LsiwYVnryExcsR1xWA274MArL',
+  consumer_secret: 'g3IJh1SOhOLOnGr4hKJWbuVo80jJfNwI2woLKiyLURgqOzlWmF',
+  access_token_key: '2442975125-ieTYruT97SiD9J46VXuURGCrOaJpBFDawRXTvuT',
+  access_token_secret: 'YH9ZdtG6dartapDqlWEQxqhqOlZdsuV12bYjbB4bBxVev'
+})
 var crypto = require('crypto')
 var request = require('request')
 
@@ -99,6 +106,37 @@ module.exports = {
         })
       }
     })
-	}
+	},
+
+  getLikedTweets: function (req, res) {
+    var count = 10
+    if (req.query.count)
+      count = req.query.count
+    twitterClient.get('favorites/list', {count: count}, function(err, result, response) {
+      if (err) {
+        console.error(err)
+        return res.status(500).json({status: false, error: 'Internal error.'})
+      }
+      // data
+      var tweets = []
+      for (var i = 0; i < result.length; i++) {
+        tweets.push({
+          id: result[i].id,
+          text: result[i].text,
+          retweet_count: result[i].retweet_count,
+          retweeted: result[i].retweeted,
+          created_at: result[i].created_at,
+          user: {
+            id: result[i].user.id,
+            name: result[i].user.name,
+            screen_name: result[i].user.screen_name,
+            followers_count: result[i].followers_count
+          }
+        })
+      }
+
+      res.json({status: true, data: tweets})
+    })
+  }
 
 }

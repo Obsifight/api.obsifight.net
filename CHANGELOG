@@ -1,3 +1,6 @@
+1.7.0
+- Add GET /socials/twitter/tweets/liked
+
 1.6.0
 - Edit Twitter authorization process (use notification instead of save into database)
 
