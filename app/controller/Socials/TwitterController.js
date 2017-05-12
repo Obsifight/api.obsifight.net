@@ -125,7 +125,7 @@ module.exports = {
           text: result[i].text,
           retweet_count: result[i].retweet_count,
           retweeted: result[i].retweeted,
-          created_at: result[i].created_at,
+          created_at: (new Date(result[i].created_at)).getTime(),
           user: {
             id: result[i].user.id,
             name: result[i].user.name,
