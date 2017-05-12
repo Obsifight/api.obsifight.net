@@ -1,3 +1,6 @@
+1.7.1
+- Edit tweets liked, use timestamps
+
 1.7.0
 - Add GET /socials/twitter/tweets/liked
 
