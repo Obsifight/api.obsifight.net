@@ -60,10 +60,11 @@ module.exports = {
         },
         // logblock
         function (callback) {
-          db.get('logblock').query("SELECT `playerid` FROM `lb-players` WHERE `playername` = ? LIMIT 1", [username], function (err, rows, fields) {
+          /*db.get('logblock').query("SELECT `playerid` FROM `lb-players` WHERE `playername` = ? LIMIT 1", [username], function (err, rows, fields) {
             if (err) return callback(err)
             callback(undefined, rows)
-          })
+          })*/
+          callback(undefined, -1)
         }
       ], function (err, results) {
         if (err) return next(err)

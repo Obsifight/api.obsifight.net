@@ -300,7 +300,7 @@ module.exports = {
         },
         // get old balance
         function (callback) {
-          db.get('web_v5').query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
+          db.get('web_v6').query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
             if (err) return callback(err)
             if (!rows[0]) return callback(undefined, 0.0)
             callback(undefined, parseFloat(rows[0].balance))
