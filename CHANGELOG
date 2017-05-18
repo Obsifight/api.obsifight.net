@@ -1,3 +1,8 @@
+1.7.2
+- Edit databases for V7
+- Remove killstats and playerlogger
+- Add currentDB variable
+
 1.7.1
 - Edit tweets liked, use timestamps
 

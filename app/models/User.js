@@ -18,7 +18,7 @@ module.exports = {
 
     // web
     if (username == parseInt(username)) { // is an id
-      db.get('web_v6').query("SELECT `pseudo` FROM users WHERE `id` = ? LIMIT 1", [username], function (err, rows, fields) {
+      db.get(currentDB).query("SELECT `pseudo` FROM users WHERE `id` = ? LIMIT 1", [username], function (err, rows, fields) {
         if (err) return next(err)
         queries(rows[0].pseudo)
       })
@@ -28,13 +28,13 @@ module.exports = {
 
     function checkIfNotAndOldUsername(username) {
       // find if username wasn't an old username
-      db.get('web_v6').query("SELECT `user_id` AS `user_id` FROM `obsi__pseudo_update_histories` WHERE `old_pseudo` = ? LIMIT 1", [username], function (err, rows, fields) {
+      db.get(currentDB).query("SELECT `user_id` AS `user_id` FROM `obsi__pseudo_update_histories` WHERE `old_pseudo` = ? LIMIT 1", [username], function (err, rows, fields) {
         if (err) return next(err)
         if (rows === undefined || rows.length === 0)
           return queries(username)
 
         // old username, so get new username with this id
-        db.get('web_v6').query("SELECT `pseudo` AS `username` FROM users WHERE `id` = ? LIMIT 1", [rows[0].user_id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `pseudo` AS `username` FROM users WHERE `id` = ? LIMIT 1", [rows[0].user_id], function (err, rows, fields) {
           if (err) return next(err)
           if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
           return queries(rows[0].username)
@@ -46,7 +46,7 @@ module.exports = {
       async.parallel([
         // web
         function (callback) {
-          db.get('web_v6').query("SELECT `id` FROM users WHERE `pseudo` = ? LIMIT 1", [username], function (err, rows, fields) {
+          db.get(currentDB).query("SELECT `id` FROM users WHERE `pseudo` = ? LIMIT 1", [username], function (err, rows, fields) {
             if (err) return callback(err)
             callback(undefined, rows)
           })
@@ -126,7 +126,7 @@ module.exports = {
   },
 
   getWebsiteInfos: function (id, next) {
-    db.get('web_v6').query("SELECT `id` AS `id`, `pseudo` AS `username`, `email` AS `email`, `money` AS `money`, `ip` AS `register_ip`, `skin` AS `has_purchased_skin`, `cape` AS `has_purchased_cape`, `created` AS `register_date`, `obsi-skin_uploaded` AS `skin_uploaded`, `obsi-cape_uploaded` AS `cape_uploaded`, `obsi-obsiguard_enabled` AS `obsiguard_enabled` FROM `users` WHERE `id` = ? LIMIT 1", [id], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `id` AS `id`, `pseudo` AS `username`, `email` AS `email`, `money` AS `money`, `ip` AS `register_ip`, `skin` AS `has_purchased_skin`, `cape` AS `has_purchased_cape`, `created` AS `register_date`, `obsi-skin_uploaded` AS `skin_uploaded`, `obsi-cape_uploaded` AS `cape_uploaded`, `obsi-obsiguard_enabled` AS `obsiguard_enabled` FROM `users` WHERE `id` = ? LIMIT 1", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
       return next(undefined, rows[0])
@@ -134,7 +134,7 @@ module.exports = {
   },
 
   getUsernameUpdateLogs: function (id, next) {
-    db.get('web_v6').query("SELECT `id` AS `id`, `user_id` AS `user_id`, `old_pseudo` AS `old_username`, `new_pseudo` AS `new_username`, `created` AS `update_date` FROM `obsi__pseudo_update_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `id` AS `id`, `user_id` AS `user_id`, `old_pseudo` AS `old_username`, `new_pseudo` AS `new_username`, `created` AS `update_date` FROM `obsi__pseudo_update_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       return next(undefined, rows)
@@ -142,7 +142,7 @@ module.exports = {
   },
 
   getRefunds: function (id, next) {
-    db.get('web_v6').query("SELECT `added_money` AS `added_money` FROM `obsi__refund_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `added_money` AS `added_money` FROM `obsi__refund_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       // formatting
@@ -162,7 +162,7 @@ module.exports = {
   },
 
   getItemsPurchases: function (id, next) {
-    db.get('web_v6').query("SELECT `shop__items_buy_histories`.`created` AS `date`, `shop__items`.`price` AS `price`, `shop__items`.`name` AS `item_name` FROM `shop__items_buy_histories` INNER JOIN `users` ON `users`.`id` = `shop__items_buy_histories`.`user_id` INNER JOIN `shop__items` ON `shop__items`.`id` = `shop__items_buy_histories`.`item_id` WHERE `shop__items_buy_histories`.`user_id` = ?", [id], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `shop__items_buy_histories`.`created` AS `date`, `shop__items`.`price` AS `price`, `shop__items`.`name` AS `item_name` FROM `shop__items_buy_histories` INNER JOIN `users` ON `users`.`id` = `shop__items_buy_histories`.`user_id` INNER JOIN `shop__items` ON `shop__items`.`id` = `shop__items_buy_histories`.`item_id` WHERE `shop__items_buy_histories`.`user_id` = ?", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       // formatting
@@ -185,7 +185,7 @@ module.exports = {
     async.parallel([
       // paypal
       function (cb) {
-        db.get('web_v6').query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `shop__paypal_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `shop__paypal_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
           if (err) return cb(err)
           if (rows === undefined || rows.length === 0) return cb(undefined, [])
           // formatting
@@ -205,7 +205,7 @@ module.exports = {
       },
       // paysafecard
       function (cb) {
-        db.get('web_v6').query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `paysafecard__payment_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `paysafecard__payment_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
           if (err) return cb(err)
           if (rows === undefined || rows.length === 0) return cb(undefined, [])
           // formatting
@@ -225,7 +225,7 @@ module.exports = {
       },
       // dedipass
       function (cb) {
-        db.get('web_v6').query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `shop__dedipass_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `shop__dedipass_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
           if (err) return cb(err)
           if (rows === undefined || rows.length === 0) return cb(undefined, [])
           // formatting
@@ -245,7 +245,7 @@ module.exports = {
       },
       // stripe
       function (cb) {
-        db.get('web_v6').query("SELECT `credits` AS `added_points`, `created` AS `date` FROM `shopplus__stripe_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `credits` AS `added_points`, `created` AS `date` FROM `shopplus__stripe_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
           if (err) return cb(err)
           if (rows === undefined || rows.length === 0) return cb(undefined, [])
           // formatting
@@ -270,7 +270,7 @@ module.exports = {
   },
 
   getMoneyTransfers: function (id, next) {
-    db.get('web_v6').query("SELECT `shop__points_transfer_histories`.`created` AS `date`, `shop__points_transfer_histories`.`points` AS `how`, `users`.`pseudo` AS `to` FROM `shop__points_transfer_histories` INNER JOIN `users` ON `users`.`id` = `shop__points_transfer_histories`.`user_id` WHERE `shop__points_transfer_histories`.`author_id` = ?", [id], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `shop__points_transfer_histories`.`created` AS `date`, `shop__points_transfer_histories`.`points` AS `how`, `users`.`pseudo` AS `to` FROM `shop__points_transfer_histories` INNER JOIN `users` ON `users`.`id` = `shop__points_transfer_histories`.`user_id` WHERE `shop__points_transfer_histories`.`author_id` = ?", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       // formatting
@@ -290,7 +290,7 @@ module.exports = {
   },
 
   getMoneyTransfersFromOthers: function (id, next) {
-    db.get('web_v6').query("SELECT `shop__points_transfer_histories`.`created` AS `date`, `shop__points_transfer_histories`.`points` AS `how`, `users`.`pseudo` AS `from` FROM `shop__points_transfer_histories` INNER JOIN `users` ON `users`.`id` = `shop__points_transfer_histories`.`author_id` WHERE `shop__points_transfer_histories`.`user_id` = ?", [id], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `shop__points_transfer_histories`.`created` AS `date`, `shop__points_transfer_histories`.`points` AS `how`, `users`.`pseudo` AS `from` FROM `shop__points_transfer_histories` INNER JOIN `users` ON `users`.`id` = `shop__points_transfer_histories`.`author_id` WHERE `shop__points_transfer_histories`.`user_id` = ?", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       // formatting
@@ -310,7 +310,7 @@ module.exports = {
   },
 
   getYoutubeRemunerations: function (id, next) {
-    db.get('web_v6').query("SELECT `obsi__youtube_videos_remuneration_histories`.`title` AS `title`, `obsi__youtube_videos_remuneration_histories`.`remuneration` AS `remuneration`, `obsi__youtube_videos_remuneration_histories`.`created` AS `date` FROM `obsi__youtube_videos_remuneration_histories` INNER JOIN `obsi__youtube_channels` ON `obsi__youtube_videos_remuneration_histories`.`channel_id` = `obsi__youtube_channels`.`youtube_channel_id` WHERE `obsi__youtube_channels`.`user_id` = ?", [id], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `obsi__youtube_videos_remuneration_histories`.`title` AS `title`, `obsi__youtube_videos_remuneration_histories`.`remuneration` AS `remuneration`, `obsi__youtube_videos_remuneration_histories`.`created` AS `date` FROM `obsi__youtube_videos_remuneration_histories` INNER JOIN `obsi__youtube_channels` ON `obsi__youtube_videos_remuneration_histories`.`channel_id` = `obsi__youtube_channels`.`youtube_channel_id` WHERE `obsi__youtube_channels`.`user_id` = ?", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       // formatting
@@ -330,7 +330,7 @@ module.exports = {
   },
 
   getMarketPurchases: function (id, next) {
-    db.get('web_v6').query("SELECT `playermarket__purchase_histories`.`price` AS `price`,`playermarket__purchase_histories`.`created` AS `date`, `users`.`pseudo` AS `seller_username` FROM `playermarket__purchase_histories` INNER JOIN `users` ON `users`.`id` = `playermarket__purchase_histories`.`seller_id` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `playermarket__purchase_histories`.`price` AS `price`,`playermarket__purchase_histories`.`created` AS `date`, `users`.`pseudo` AS `seller_username` FROM `playermarket__purchase_histories` INNER JOIN `users` ON `users`.`id` = `playermarket__purchase_histories`.`seller_id` WHERE `user_id` = ?", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       // formatting
@@ -350,7 +350,7 @@ module.exports = {
   },
 
   getMarketSales: function (id, next) {
-    db.get('web_v6').query("SELECT  `playermarket__purchase_histories`.`price` AS  `price` ,  `playermarket__purchase_histories`.`created` AS  `date` ,  `users`.`pseudo` AS  `buyer_username` FROM  `playermarket__purchase_histories` INNER JOIN  `users` ON  `users`.`id` =  `playermarket__purchase_histories`.`user_id` WHERE  `seller_id` = ?", [id], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT  `playermarket__purchase_histories`.`price` AS  `price` ,  `playermarket__purchase_histories`.`created` AS  `date` ,  `users`.`pseudo` AS  `buyer_username` FROM  `playermarket__purchase_histories` INNER JOIN  `users` ON  `users`.`id` =  `playermarket__purchase_histories`.`user_id` WHERE  `seller_id` = ?", [id], function (err, rows, fields) {
       if (err) return next(err)
       if (rows === undefined || rows.length === 0) return next(undefined, [])
       // formatting

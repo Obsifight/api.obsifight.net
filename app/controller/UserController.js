@@ -147,7 +147,7 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Missing user\'s name.'})
 
     // find user
-    db.get('web_v6').query("SELECT `id` AS `id` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `id` AS `id` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
@@ -155,7 +155,7 @@ module.exports = {
       if (rows === undefined || rows[0] === undefined)
         return res.status(404).json({status: false, error: 'User not found.'})
       // find user's vote
-      db.get('web_v6').query("SELECT `created` AS `last_vote_date` FROM obsivote__votes WHERE `user_id` = ? LIMIT 1", [rows[0].id], function (err, rows, fields) {
+      db.get(currentDB).query("SELECT `created` AS `last_vote_date` FROM obsivote__votes WHERE `user_id` = ? LIMIT 1", [rows[0].id], function (err, rows, fields) {
         // error
         if (err) {
           console.error(err)
@@ -168,7 +168,7 @@ module.exports = {
         var last_vote_date = (new Date(rows[0].last_vote_date)).getTime()
 
         // get configuration
-        db.get('web_v6').query("SELECT `time_vote` AS `vote_cooldown` FROM obsivote__configurations WHERE 1 LIMIT 1", function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `time_vote` AS `vote_cooldown` FROM obsivote__configurations WHERE 1 LIMIT 1", function (err, rows, fields) {
           // error
           if (err) {
             console.error(err)
@@ -195,7 +195,7 @@ module.exports = {
       return res.status(400).json({status: false, error: 'Missing params.'})
 
     // find user
-    db.get('web_v6').query("SELECT `id` AS `id`, `password` AS `password` FROM users WHERE `pseudo` = ? LIMIT 1", [req.body.username], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `id` AS `id`, `password` AS `password` FROM users WHERE `pseudo` = ? LIMIT 1", [req.body.username], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error when find user.'})
@@ -262,7 +262,7 @@ module.exports = {
     if (req.params.username === undefined)
       return res.status(400).json({status: false, error: 'Missing user\'s name.'})
     // find user
-    db.get('web_v6').query("SELECT `id` AS `id` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
+    db.get(currentDB).query("SELECT `id` AS `id` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error.'})
@@ -293,7 +293,7 @@ module.exports = {
         },
         // get current balance
         function (callback) {
-          db.get('web_v6').query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
+          db.get(currentDB).query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
             if (err) return callback(err)
             callback(undefined, parseFloat(rows[0].balance))
           })
@@ -397,7 +397,7 @@ module.exports = {
         if (id == parseInt(id))
           return parseInt(id)
       })
-      var dbName = 'web_v6'
+      var dbName = currentDB
       var req = "SELECT `id` AS `id`, `pseudo` AS `username` FROM `users` WHERE `id` IN(" + list.join() + ")"
     } else {
       var list = _.map(req.body.uuids, function (uuid) {
@@ -534,23 +534,25 @@ module.exports = {
     async.parallel([
       // get kills
       function (callback) {
-        db.get('playerlogger').query("SELECT `data` AS `killed` FROM `playerlogger` WHERE `type` = 'kill' AND playername = ?", [req.params.username], function (err, rows, fields) {
+        /*db.get('playerlogger').query("SELECT `data` AS `killed` FROM `playerlogger` WHERE `type` = 'kill' AND playername = ?", [req.params.username], function (err, rows, fields) {
           if (err)
             return callback(err)
           callback(undefined, rows.map(function (row) {
             return row.killed
           }))
-        })
+        })*/
+        callback(undefined, [])
       },
       // get deaths
       function (callback) {
-        db.get('playerlogger').query("SELECT `data` AS `killer` FROM `playerlogger` WHERE `type` = 'killedby' AND playername = ?", [req.params.username], function (err, rows, fields) {
+        /*db.get('playerlogger').query("SELECT `data` AS `killer` FROM `playerlogger` WHERE `type` = 'killedby' AND playername = ?", [req.params.username], function (err, rows, fields) {
           if (err)
             return callback(err)
           callback(undefined, rows.map(function (row) {
             return row.killer
           }))
-        })
+        })*/
+        callback(undefined, [])
       }
     ], function (err, results) {
       if (err) {

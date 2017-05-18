@@ -21,7 +21,7 @@ module.exports = {
     if (!req.query || !req.query.userId || req.query.userId.length <= 0 || !req.query.callback || req.query.callback.length <= 0 || !req.query.notification || req.query.notification.length <= 0 || !req.query.authKey || req.query.authKey.length <= 0)
       return res.status(400).json({status: false, error: 'Invalid request.'})
     // check authencity of user id
-    db.get('web_v6').query('SELECT password FROM users WHERE id = ? LIMIT 1', [req.query.userId], function (err, row, fields) {
+    db.get(currentDB).query('SELECT password FROM users WHERE id = ? LIMIT 1', [req.query.userId], function (err, row, fields) {
       if (err) {
         console.error(err)
         return res.status(500).json({status: false, error: 'Internal error when check auth key.'})
