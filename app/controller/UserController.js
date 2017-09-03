@@ -368,7 +368,7 @@ module.exports = {
             return res.status(400).json({status: false, error: 'Missing user\'s name.'})
         if (req.body === undefined || req.body.amount === undefined || req.body.amount.length === 0)
             return res.status(400).json({status: false, error: 'Missing amount.'})
-        if (req.body === undefined || req.body.receiver === undefined || req.body.receiver.length === 0)
+        if (req.body === undefined || req.body.receiver === undefined || (req.body.receiver !== null && req.body.receiver.length === 0))
             return res.status(400).json({status: false, error: 'Missing receiver\'s username.'})
         var amount = parseFloat(req.body.amount)
         var receiver = req.body.receiver
@@ -384,30 +384,40 @@ module.exports = {
             if (amount > user.money)
                 return res.status(402).json({status: false, error: 'User didn\'t have enough money.'})
             // find receiver
-            db.get(currentDB).query("SELECT `id` AS `id`, `money` AS `money` FROM users WHERE `pseudo` = ? LIMIT 1", [receiver], function (err, rows) {
-                if (err) {
-                    console.error(err)
-                    return res.status(500).json({status: false, error: 'Internal error.'})
-                }
-                if (rows === undefined || rows[0] === undefined)
-                    return res.status(404).json({status: false, error: 'Receiver not found.'})
-                receiver = rows[0]
-                var receiverMoney = receiver.money + amount
-                var userMoney = user.money - amount
-                db.get(currentDB).query("UPDATE users SET `money` = ? WHERE `id` = ?", [receiverMoney, receiver.id], function (err) {
+            if (receiver === null) {
+                db.get(currentDB).query("UPDATE users SET `money` = ? WHERE `id` = ?", [user.money - amount, user.id], function (err) {
                     if (err) {
                         console.error(err)
                         return res.status(500).json({status: false, error: 'Internal error.'})
                     }
-                    db.get(currentDB).query("UPDATE users SET `money` = ? WHERE `id` = ?", [userMoney, user.id], function (err) {
+                    return res.json({status: true, success: 'Transfer successfully proceeded.'})
+                })
+            } else {
+                db.get(currentDB).query("SELECT `id` AS `id`, `money` AS `money` FROM users WHERE `pseudo` = ? LIMIT 1", [receiver], function (err, rows) {
+                    if (err) {
+                        console.error(err)
+                        return res.status(500).json({status: false, error: 'Internal error.'})
+                    }
+                    if (rows === undefined || rows[0] === undefined)
+                        return res.status(404).json({status: false, error: 'Receiver not found.'})
+                    receiver = rows[0]
+                    var receiverMoney = receiver.money + amount
+                    var userMoney = user.money - amount
+                    db.get(currentDB).query("UPDATE users SET `money` = ? WHERE `id` = ?", [receiverMoney, receiver.id], function (err) {
                         if (err) {
                             console.error(err)
                             return res.status(500).json({status: false, error: 'Internal error.'})
                         }
-                        return res.json({status: true, success: 'Transfer successfully proceeded.'})
+                        db.get(currentDB).query("UPDATE users SET `money` = ? WHERE `id` = ?", [userMoney, user.id], function (err) {
+                            if (err) {
+                                console.error(err)
+                                return res.status(500).json({status: false, error: 'Internal error.'})
+                            }
+                            return res.json({status: true, success: 'Transfer successfully proceeded.'})
+                        })
                     })
                 })
-            })
+            }
         })
     },
 

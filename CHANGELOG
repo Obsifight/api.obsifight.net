@@ -1,3 +1,7 @@
+1.8.0
+- Add GET /user/:username/money
+- Add POST /user/:username/money/transfer
+
 1.7.2
 - Edit databases for V7
 - Remove killstats and playerlogger
