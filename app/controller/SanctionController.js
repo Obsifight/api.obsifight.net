@@ -546,9 +546,12 @@ module.exports = {
 
     // handle limit
     var limit = 100
+    var onlyActive = false
     if (req.query !== undefined && req.query.limit !== undefined)
       limit = parseInt(req.query.limit)
     limit = Math.round(limit / 3)
+    if (req.query !== undefined && req.query.active)
+      onlyActive = true
 
     // find UUID
     User.getUUIDFromUsername(req.params.username, function (err, uuid) {
@@ -566,7 +569,7 @@ module.exports = {
       async.parallel([
 
         function getBans (next) {
-          db.get('sanctions').query("SELECT `ban_id` AS `id`, `UUID` AS `uuid`, `ban_ip` AS `banned_ip`, `ban_staff` AS `staff_username`, `ban_reason` AS `reason`, `ban_server` AS `server`, `ban_begin` AS `date`, `ban_end` AS `end_date`, `ban_state` AS `state`, `ban_unbandate` AS `remove_date`, `ban_unbanstaff` AS `remove_staff`, `ban_unbanreason` AS `remove_reason` FROM BAT_ban WHERE `UUID` = ? ORDER BY `id` DESC LIMIT ?", [uuid, limit], function (err, rows, fields) {
+          db.get('sanctions').query("SELECT `ban_id` AS `id`, `UUID` AS `uuid`, `ban_ip` AS `banned_ip`, `ban_staff` AS `staff_username`, `ban_reason` AS `reason`, `ban_server` AS `server`, `ban_begin` AS `date`, `ban_end` AS `end_date`, `ban_state` AS `state`, `ban_unbandate` AS `remove_date`, `ban_unbanstaff` AS `remove_staff`, `ban_unbanreason` AS `remove_reason` FROM BAT_ban WHERE `UUID` = ? " + (onlyActive ? 'AND `ban_state` = 1' : '') + " ORDER BY `id` DESC LIMIT ?", [uuid, limit], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows[0] === undefined)
               return next(undefined, [])
@@ -589,6 +592,8 @@ module.exports = {
         },
 
         function getKicks (next) {
+          if (onlyActive)
+            return next(undefined, [])
           db.get('sanctions').query("SELECT `kick_id` AS `id`, `UUID` AS `uuid`, `kick_staff` AS `staff_username`, `kick_reason` AS `reason`, `kick_server` AS `server`, `kick_date` AS `date` FROM BAT_kick WHERE `UUID` = ? ORDER BY `id` DESC LIMIT ?", [uuid, limit], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows[0] === undefined)
@@ -612,7 +617,7 @@ module.exports = {
         },
 
         function getMutes (next) {
-          db.get('sanctions').query("SELECT `mute_id` AS `id`, `UUID` AS `uuid`, `mute_ip` AS `muted_ip`, `mute_staff` AS `staff_username`, `mute_reason` AS `reason`, `mute_server` AS `server`, `mute_begin` AS `date`, `mute_end` AS `end_date`, `mute_state` AS `state`, `mute_unmutedate` AS `remove_date`, `mute_unmutestaff` AS `remove_staff`, `mute_unmutereason` AS `remove_reason` FROM BAT_mute WHERE `UUID` = ? ORDER BY `id` DESC LIMIT ?", [uuid, limit], function (err, rows, fields) {
+          db.get('sanctions').query("SELECT `mute_id` AS `id`, `UUID` AS `uuid`, `mute_ip` AS `muted_ip`, `mute_staff` AS `staff_username`, `mute_reason` AS `reason`, `mute_server` AS `server`, `mute_begin` AS `date`, `mute_end` AS `end_date`, `mute_state` AS `state`, `mute_unmutedate` AS `remove_date`, `mute_unmutestaff` AS `remove_staff`, `mute_unmutereason` AS `remove_reason` FROM BAT_mute WHERE `UUID` = ? " + (onlyActive ? 'AND `mute_state` = 1' : '') + " ORDER BY `id` DESC LIMIT ?", [uuid, limit], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows[0] === undefined)
               return next(undefined, [])
