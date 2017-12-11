@@ -106,7 +106,7 @@ module.exports = {
                     if (err)
                         return cb(err)
                     cb(undefined, rows.map(function (address) {
-                        return address.address
+                        return address.ip
                     }, rows))
                 })
             }
