@@ -137,7 +137,7 @@ module.exports = {
     },
 
     getRefunds: function (id, next) {
-        db.get(currentDB).query("SELECT `added_money` AS `added_money` FROM `users_refund_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `amount` AS `added_money` FROM `users_refund_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows.length === 0) return next(undefined, [])
             // formatting
