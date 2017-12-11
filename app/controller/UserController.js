@@ -23,7 +23,10 @@ module.exports = {
 
         // Find user
         User.getIds(req.params.username, function (err, ids) {
-            if (err || ids.web === 0) return res.status(404).json({status: false, error: 'User not found.'})
+            if (err || ids.web === 0) {
+                console.error(err)
+                return res.status(404).json({status: false, error: 'User not found.'})
+            }
 
             async.parallel([
 
