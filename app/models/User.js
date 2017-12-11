@@ -231,7 +231,7 @@ module.exports = {
     },
 
     getMoneyTransfersFromOthers: function (id, next) {
-        db.get(currentDB).query("SELECT `users_transfer_money_histories`.`created` AS `date`, `users_transfer_money_histories`.`amount` AS `how`, `users`.`username` AS `from` " +
+        db.get(currentDB).query("SELECT `users_transfer_money_histories`.`created_at` AS `date`, `users_transfer_money_histories`.`amount` AS `how`, `users`.`username` AS `from` " +
             "FROM `users_transfer_money_histories` " +
             "INNER JOIN `users` ON `users`.`id` = `users_transfer_money_histories`.`user_id` " +
             "WHERE `users_transfer_money_histories`.`to` = ?", [id], function (err, rows, fields) {
