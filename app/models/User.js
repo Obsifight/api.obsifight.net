@@ -80,7 +80,7 @@ module.exports = {
     },
 
     getAddresses: function (id, next) {
-        async.parrallel([
+        async.parallel([
             // Get mac
             function (cb) {
                 db.get('auth').query("SELECT address ON mac_addresses WHERE user_id = ? GROUP BY address", [id], function (err, rows) {
