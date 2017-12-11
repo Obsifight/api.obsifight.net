@@ -32,11 +32,20 @@ module.exports = {
             // find if username wasn't an old username
             db.get(currentDB).query("SELECT `user_id` FROM `users_edit_username_histories` WHERE `old_username` = ? LIMIT 1", [username], function (err, rows, fields) {
                 if (err) return next(err)
+                var key, value
                 if (rows === undefined || rows.length === 0)
-                    return queries(username)
+                {
+                    key = 'username'
+                    value = usernane
+                }
+                else
+                {
+                    key = 'id'
+                    value = rows[0].user_id
+                }
 
                 // old username, so get new username with this id
-                db.get(currentDB).query("SELECT `uuid`, `id` FROM users WHERE `id` = ? LIMIT 1", [rows[0].user_id], function (err, rows, fields) {
+                db.get(currentDB).query("SELECT `uuid`, `id` FROM users WHERE `" + key + "` = ? LIMIT 1", [value], function (err, rows, fields) {
                     if (err) return next(err)
                     if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
                     result.web = rows[0].id
