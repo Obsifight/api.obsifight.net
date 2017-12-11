@@ -23,27 +23,16 @@ module.exports = {
 
         // Find user
         User.getIds(req.params.username, function (err, ids) {
-            if (err || ids.web === 0) return res.status(404).json({status: false, error: 'User not found.'})
+            if (err || ids.web === 0) {
+                console.error(err)
+                return res.status(404).json({status: false, error: 'User not found.'})
+            }
 
             async.parallel([
 
                 // get launcher logs
                 function (callback) {
-                    User.getAuthLogs(ids.auth, function (err, rows) {
-                        if (err) return callback(err)
-
-                        // formatting
-                        async.eachOf(rows, function (row, index, cb) {
-                            try {
-                                rows[index].mac_adress = JSON.parse(row.mac_adress)
-                            } catch (e) {
-                                rows[index].mac_adress = []
-                            }
-                            cb()
-                        }, function () {
-                            return callback(undefined, rows)
-                        })
-                    })
+                    User.getAddresses(ids.web, callback)
                 },
 
                 // get register date
@@ -62,22 +51,13 @@ module.exports = {
                         })
                         return callback(undefined, formattedData)
                     })
-                },
+                }
 
             ], function (err, results) {
                 if (err) {
                     console.error(err)
                     return res.status(500).json({status: false, error: 'Internal error.'})
                 }
-
-                // mac
-                var adresses = []
-                results[0].forEach(function (connection) {
-                    if (connection.mac_adress)
-                        connection.mac_adress.forEach(function (adress) {
-                            adresses.push({adress: adress})
-                        })
-                })
 
                 // render to user
                 res.json({
@@ -92,8 +72,8 @@ module.exports = {
                         registerDate: results[1].register_date,
                         lastConnection: results[2][results[1].length - 1], // launcher's logs
                         adresses: {
-                            mac: Object.keys(_.groupBy(adresses, 'adress')).remove('null'),
-                            ip: Object.keys(_.groupBy(results[0], 'ip')).remove('null')
+                            mac: results[0].mac,
+                            ip: results[0].ip
                         }
                     }
                 })
@@ -142,7 +122,7 @@ module.exports = {
             return res.status(400).json({status: false, error: 'Missing user\'s name.'})
 
         // find user
-        db.get(currentDB).query("SELECT `id` AS `id` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `id` AS `id` FROM users WHERE `username` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
             if (err) {
                 console.error(err)
                 return res.status(500).json({status: false, error: 'Internal error.'})
@@ -150,7 +130,7 @@ module.exports = {
             if (rows === undefined || rows[0] === undefined)
                 return res.status(404).json({status: false, error: 'User not found.'})
             // find user's vote
-            db.get(currentDB).query("SELECT `created` AS `last_vote_date` FROM obsivote__votes WHERE `user_id` = ? LIMIT 1", [rows[0].id], function (err, rows, fields) {
+            db.get(currentDB).query("SELECT `created_at` AS `last_vote_date` FROM votes WHERE `user_id` = ? ORDER BY id DESC LIMIT 1", [rows[0].id], function (err, rows, fields) {
                 // error
                 if (err) {
                     console.error(err)
@@ -161,26 +141,14 @@ module.exports = {
                     return res.json({status: true, success: "User hasn't vote yet!"})
 
                 var last_vote_date = (new Date(rows[0].last_vote_date)).getTime()
-
-                // get configuration
-                db.get(currentDB).query("SELECT `time_vote` AS `vote_cooldown` FROM obsivote__configurations WHERE 1 LIMIT 1", function (err, rows, fields) {
-                    // error
-                    if (err) {
-                        console.error(err)
-                        return res.status(500).json({status: false, error: 'Internal error.'})
-                    }
-                    // not config
-                    if (rows === undefined || rows.length === 0)
-                        return res.json({status: true, success: "Admin hasn't config vote yet!"})
-                    // check if cooldown (minutes) was passed
-                    var now = Date.now()
-                    var cooldown_time = rows[0].vote_cooldown * 60 * 1000 // minutes to miliseconds
-                    cooldown_time = last_vote_date + cooldown_time
-                    if (now > cooldown_time)
-                        return res.json({status: true, success: "User can vote!"})
-                    else
-                        return res.json({status: false, success: "User can't vote!"})
-                })
+                // check if cooldown (minutes) was passed
+                var now = Date.now()
+                var cooldown_time = 240 * 60 * 1000 // minutes to miliseconds
+                cooldown_time = last_vote_date + cooldown_time
+                if (now > cooldown_time)
+                    return res.json({status: true, success: "User can vote!"})
+                else
+                    return res.json({status: false, success: "User can't vote!"})
             })
         })
     },
@@ -190,7 +158,7 @@ module.exports = {
             return res.status(400).json({status: false, error: 'Missing params.'})
 
         // find user
-        db.get(currentDB).query("SELECT `id` AS `id`, `password` AS `password` FROM users WHERE `pseudo` = ? LIMIT 1", [req.body.username], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `id` AS `id`, `password` AS `password` FROM users WHERE `username` = ? LIMIT 1", [req.body.username], function (err, rows, fields) {
             if (err) {
                 console.error(err)
                 return res.status(500).json({status: false, error: 'Internal error when find user.'})
@@ -216,43 +184,24 @@ module.exports = {
     },
 
     getStaff: function (req, res) {
-        var ranks = config.staff.ranks
-        if (req.body.premium)
-            ranks = _.findWhere(ranks, {premium: true})
-        // find groups id
-        var usersByRanks = {}
-        async.each(ranks, function (rank, next) {
-            db.get('pex').query('SELECT `child` AS `user` FROM `permissions_inheritance` WHERE `parent` = ?', [rank.name], function (err, rows, fields) {
-                if (err) {
-                    console.error(err)
-                    return next()
-                }
-                // empty
-                if (rows === undefined || rows.length === 0)
-                    return next()
-                // each users
-                async.each(rows, function (row, cb) {
-                    // get username
-                    User.getUsernameFromUUID(row.user, function (err, data) {
-                        if (err) {
-                            console.error(err)
-                            return cb()
-                        }
-                        if (!usersByRanks[rank.customGroupName])
-                            usersByRanks[rank.customGroupName] = []
-                        usersByRanks[rank.customGroupName].push(data.username)
-                        return cb()
-                    })
-                }, function () {
-                    return next()
-                })
-            })
-        }, function () {
-            res.json({
-            status: true,
-            data: usersByRanks
-        })
-    })
+       var ranks = {}
+       db.get('permissions').query('SELECT memberships.display_name AS member, entities.display_name FROM memberships' +
+           'INNER JOIN entities ON entities.id = memberships.group_id' +
+           'WHERE entities.priority > 1' +
+           'ORDER BY entities.priority DESC', function (err, rows) {
+           if (err) {
+               console.error(err)
+               return res.status(500).json({status: false, error: 'Internal error.'})
+           }
+           for (var i = 0; i < rows.length; i++)
+           {
+               if (ranks[rows[i].display_name] !== undefined)
+                   ranks[rows[i].display_name].push(rows[i].member)
+               else
+                   ranks[rows[i].display_name] = [rows[i].member]
+           }
+           return (res.json({status: true, data: ranks}))
+       })
     },
 
     getMoneyTimeline: function (req, res) {
@@ -307,14 +256,6 @@ module.exports = {
                 function (callback) {
                     User.getYoutubeRemunerations(rows[0].id, callback)
                 },
-                // get money from market
-                function (callback) {
-                    User.getMarketPurchases(rows[0].id, callback)
-                },
-                // get money from market
-                function (callback) {
-                    User.getMarketSales(rows[0].id, callback)
-                }
             ], function (err, results) {
                 if (err) {
                     console.error(err)
@@ -324,7 +265,7 @@ module.exports = {
                 var currentBalance = results[5] || 0
                 // formatting
                 var timeline = []
-                timeline = timeline.concat(results[0], results[1], results[2], results[3], results[4], results[7], results[8], results[9])
+                timeline = timeline.concat(results[0], results[1], results[2], results[3], results[4], results[7])
                 timeline.sort(function (a, b) {
                     return new Date(b.date).getTime() - new Date(a.date).getTime()
                 })
@@ -345,7 +286,7 @@ module.exports = {
         if (req.params.username === undefined)
             return res.status(400).json({status: false, error: 'Missing user\'s name.'})
         // find user
-        db.get(currentDB).query("SELECT `money` AS `money` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows) {
+        db.get(currentDB).query("SELECT `money` AS `money` FROM users WHERE `username` = ? LIMIT 1", [req.params.username], function (err, rows) {
             if (err) {
                 console.error(err)
                 return res.status(500).json({status: false, error: 'Internal error.'})
@@ -368,7 +309,7 @@ module.exports = {
         var amount = parseFloat(req.body.amount)
         var receiver = req.body.receiver
         // find user
-        db.get(currentDB).query("SELECT `id` AS `id`, `money` AS `money` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows) {
+        db.get(currentDB).query("SELECT `id` AS `id`, `money` AS `money` FROM users WHERE `username` = ? LIMIT 1", [req.params.username], function (err, rows) {
             if (err) {
                 console.error(err)
                 return res.status(500).json({status: false, error: 'Internal error.'})
@@ -388,7 +329,7 @@ module.exports = {
                     return res.json({status: true, success: 'Transfer successfully proceeded.'})
                 })
             } else {
-                db.get(currentDB).query("SELECT `id` AS `id`, `money` AS `money` FROM users WHERE `pseudo` = ? LIMIT 1", [receiver], function (err, rows) {
+                db.get(currentDB).query("SELECT `id` AS `id`, `money` AS `money` FROM users WHERE `username` = ? LIMIT 1", [receiver], function (err, rows) {
                     if (err) {
                         console.error(err)
                         return res.status(500).json({status: false, error: 'Internal error.'})
@@ -426,7 +367,7 @@ module.exports = {
                 if (!req.body.ip || req.body.ip.length < 5)
                     return callback(undefined, [])
                 // find
-                db.get('launcherlogs').query("SELECT `username` AS `username`, MAX(`date`) AS `last_connection` FROM `loginlogs` WHERE `ip` = ? GROUP BY `username` ORDER BY MAX(`date`)", [req.body.ip], function (err, rows, fields) {
+                db.get(currentDB).query("SELECT user_id FROM users_connection_logs WHERE ip = ? GROUP BY user_id", [req.body.ip], function (err, rows, fields) {
                     if (err) return callback(err)
                     if (!rows || rows.length === 0) return callback(undefined, [])
                     return callback(undefined, rows)
@@ -437,7 +378,7 @@ module.exports = {
                 if (!req.body.mac || req.body.mac.length < 5)
                     return callback(undefined, [])
                 // find
-                db.get('launcherlogs').query("SELECT `username` AS `username`, MAX(`date`) AS `last_connection` FROM `loginlogs` WHERE `mac_adress` LIKE '%\"" + req.body.mac + "\"%' GROUP BY `username` ORDER BY MAX(`date`)", [], function (err, rows, fields) {
+                db.get('auth').query("SELECT user_id FROM mac_addresses WHERE address LIKE '%?%' GROUP BY user_id", [req.body.mac], function (err, rows, fields) {
                     if (err) return callback(err)
                     if (!rows || rows.length === 0) return callback(undefined, [])
                     return callback(undefined, rows)
@@ -450,7 +391,7 @@ module.exports = {
             }
             // response
             var data = []
-            _.each(_.groupBy([].concat(results[0], results[1]), 'username'), function (value, key, list) {
+            _.each(_.groupBy([].concat(results[0], results[1]), 'user_id'), function (value, key, list) {
                 data.push(value[0])
             })
             res.json({
@@ -464,23 +405,22 @@ module.exports = {
         if (!req.body || req.body.length === 0 || ((!req.body.ids || req.body.ids.length === 0) && (!req.body.uuids || req.body.uuids.length === 0)))
             return res.status(400).json({status: false, error: 'Missing params.'})
         // parse
+        var dbreq, list
         if (req.body.ids) {
-            var list = _.map(req.body.ids, function (id) {
+            list = _.map(req.body.ids, function (id) {
                 if (id == parseInt(id))
                     return parseInt(id)
             })
-            var dbName = currentDB
-            var req = "SELECT `id` AS `id`, `pseudo` AS `username` FROM `users` WHERE `id` IN(" + list.join() + ")"
+            dbreq = "SELECT `id` AS `id`, `username` AS `username` FROM `users` WHERE `id` IN(" + list.join() + ")"
         } else {
-            var list = _.map(req.body.uuids, function (uuid) {
+            list = _.map(req.body.uuids, function (uuid) {
                 if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.exec(uuid))
                     return uuid
             })
-            var dbName = 'auth'
-            var req = "SELECT `profileid` AS `id`, `user_pseudo` AS `username` FROM `joueurs` WHERE `profileid` IN('" + list.join("', '") + "')"
+            dbreq = "SELECT `uuid` AS `id`, `username` AS `username` FROM `users` WHERE `uuid` IN('" + list.join("', '") + "')"
         }
         // query
-        db.get(dbName).query(req, function (err, rows, fields) {
+        db.get(currentDB).query(dbreq, function (err, rows, fields) {
             if (err) {
                 console.error(err)
                 return res.status(500).json({status: false, error: 'Internal error.'})
@@ -497,153 +437,6 @@ module.exports = {
                 status: true,
                 data: {
                     users: users
-                }
-            })
-        })
-    },
-
-    compareUsers: function (req, res) {
-        if (req.params.username1 === undefined || req.params.username2 === undefined)
-            return res.status(400).json({status: false, error: 'Missing user\'s names.'})
-        var user1 = req.params.username1
-        var user2 = req.params.username2
-        async.parallel([
-            // ip
-            function (callback) {
-                // Get connections
-                db.get('launcherlogs').query('(SELECT `ip`, `username` FROM `loginlogs` AS  `user_1` WHERE `user_1`.`username` = ? GROUP BY `ip`) UNION (SELECT  `ip`, `username` FROM  `loginlogs` WHERE `username` = ? GROUP BY `ip`)', [user1, user2], function (err, rows, fields) {
-                    if (err)
-                        return callback(err)
-                    var connections = {}
-                    connections[user1] = []
-                    connections[user2] = []
-                    // each connections, order by username
-                    for (var i = 0; i < rows.length; i++) {
-                        connections[rows[i].username].push(rows[i].ip)
-                    }
-                    // count
-                    var user1IPCount = connections[user1].length
-                    var user2IPCount = connections[user2].length
-                    // commun
-                    var commonIP = _.intersection(connections[user1], connections[user2])
-                    var commonIPCount = commonIP.length
-                    // percentage
-                    if (commonIPCount > 0) {
-                        if (user1IPCount > user2IPCount) // user 1 have more IP than user 2
-                            var percentage = (commonIPCount * 100) / user2IPCount // calcul percentage with user who have less IP
-                        else
-                            var percentage = (commonIPCount * 100) / user1IPCount // calcul percentage with user who have less IP
-                    } else {
-                        percentage = 0
-                    }
-                    callback(undefined, percentage)
-                })
-            },
-            // mac
-            function (callback) {
-                // Get connections
-                db.get('launcherlogs').query('(SELECT `mac_adress`, `username` FROM `loginlogs` AS  `user_1` WHERE `user_1`.`username` = ? GROUP BY `mac_adress`) UNION (SELECT  `mac_adress`, `username` FROM  `loginlogs` WHERE `username` = ? GROUP BY `mac_adress`)', [user1, user2], function (err, rows, fields) {
-                    if (err)
-                        return callback(err)
-                    var connections = {}
-                    connections[user1] = []
-                    connections[user2] = []
-                    // each connections, order by username
-                    var mac
-                    for (var i = 0; i < rows.length; i++) {
-                        mac = rows[i].mac_adress
-                        if (!mac) continue // NULL
-                        try {
-                            mac = JSON.parse(mac)
-                        } catch (e) {
-                            console.error(e)
-                            continue
-                        }
-                        for (var k = 0; k < mac.length; k++) {
-                            if (connections[rows[i].username].indexOf(mac[k]) != -1)
-                                continue // already in array
-                            connections[rows[i].username].push(mac[k])
-                        }
-                    }
-                    // count
-                    var user1MACCount = connections[user1].length
-                    var user2MACCount = connections[user2].length
-                    // commun
-                    var commonMAC = _.intersection(connections[user1], connections[user2])
-                    var commonMACCount = commonMAC.length
-                    // percentage
-                    if (commonMACCount > 0) {
-                        if (user1MACCount > user2MACCount) // user 1 have more MAC than user 2
-                            var percentage = (commonMACCount * 100) / user2MACCount // calcul percentage with user who have less MAC
-                        else
-                            var percentage = (commonMACCount * 100) / user1MACCount // calcul percentage with user who have less MAC
-                    } else {
-                        percentage = 0
-                    }
-                    callback(undefined, percentage)
-                })
-            }
-        ], function (err, result) {
-            if (err) {
-                console.error(err)
-                return res.status(500).json({status: false, error: 'Internal error.'})
-            }
-            // result
-            res.json({
-                status: true,
-                data: {
-                    commonIPPercentage: result[0],
-                    commonMACPercentage: result[1]
-                }
-            })
-        })
-    },
-
-    getStats: function (req, res) {
-        if (req.params.username === undefined)
-            return res.status(400).json({status: false, error: 'Missing user\'s name.'})
-
-        async.parallel([
-            // get kills
-            function (callback) {
-                /*db.get('playerlogger').query("SELECT `data` AS `killed` FROM `playerlogger` WHERE `type` = 'kill' AND playername = ?", [req.params.username], function (err, rows, fields) {
-                  if (err)
-                    return callback(err)
-                  callback(undefined, rows.map(function (row) {
-                    return row.killed
-                  }))
-                })*/
-                callback(undefined, [])
-            },
-            // get deaths
-            function (callback) {
-                /*db.get('playerlogger').query("SELECT `data` AS `killer` FROM `playerlogger` WHERE `type` = 'killedby' AND playername = ?", [req.params.username], function (err, rows, fields) {
-                  if (err)
-                    return callback(err)
-                  callback(undefined, rows.map(function (row) {
-                    return row.killer
-                  }))
-                })*/
-                callback(undefined, [])
-            }
-        ], function (err, results) {
-            if (err) {
-                console.error(err)
-                return res.status(500).json({status: false, error: 'Internal error.'})
-            }
-            // result
-            res.json({
-                status: true,
-                data: {
-                    ks: {
-                        kills: results[0].length,
-                        deaths: results[1].length,
-                        ratio: (results[1].length > 0) ? results[0].length / results[1].length : results[0].length
-                    },
-                    history: {
-                        kills: results[0],
-                        deaths: results[1]
-                    }
                 }
             })
         })
