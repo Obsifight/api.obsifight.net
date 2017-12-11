@@ -72,8 +72,8 @@ module.exports = {
                         registerDate: results[1].register_date,
                         lastConnection: results[2][results[1].length - 1], // launcher's logs
                         adresses: {
-                            mac: result[0].mac,
-                            ip: result[0].ip
+                            mac: results[0].mac,
+                            ip: results[0].ip
                         }
                     }
                 })

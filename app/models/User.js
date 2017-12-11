@@ -114,8 +114,8 @@ module.exports = {
             if (err)
                 return (next(err))
             next(undefined, {
-                mac: results[0],
-                ip: results[1]
+                mac: results && results.length > 0 && results[0] !== undefined ? results[0] : [],
+                ip: results && results.length > 0 && results[1] !== undefined ? results[1] : []
             })
         })
     },
