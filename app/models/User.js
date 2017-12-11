@@ -36,7 +36,7 @@ module.exports = {
                 if (rows === undefined || rows.length === 0)
                 {
                     key = 'username'
-                    value = usernane
+                    value = username
                 }
                 else
                 {
