@@ -92,7 +92,7 @@ module.exports = {
         async.parallel([
             // Get mac
             function (cb) {
-                db.get('auth').query("SELECT address ON mac_addresses WHERE user_id = ? GROUP BY address", [id], function (err, rows) {
+                db.get('auth').query("SELECT address FROM mac_addresses WHERE user_id = ? GROUP BY address", [id], function (err, rows) {
                     if (err)
                         return cb(err)
                     cb(undefined, rows.map(function (address) {
