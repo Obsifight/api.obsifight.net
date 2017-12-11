@@ -12,7 +12,7 @@ module.exports = {
         if (username === undefined)
             return callback(new Error('Username is not defined.'))
         var result = {
-            web: -1,
+            web: 0,
             logblock: -1,
             uuid: null
         }
@@ -21,7 +21,7 @@ module.exports = {
         if (username == parseInt(username)) { // is an id
             db.get(currentDB).query("SELECT `uuid`, `id` FROM users WHERE `id` = ? LIMIT 1", [username], function (err, rows) {
                 if (err) return next(err)
-                result.web = rows[0].i
+                result.web = rows[0].id
                 queries(rows[0].uuid)
             })
         } else {
