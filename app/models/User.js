@@ -79,23 +79,40 @@ module.exports = {
         })
     },
 
-    getAuthLogs: function (id, next) {
-        // find id
-        db.get('auth').query("SELECT `user_pseudo` AS `username` FROM `joueurs` WHERE `user_id` = ? LIMIT 1", [id], function (err, rows, fields) {
-            if (err) return next(err)
-            if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
-
-            // find logs with username
-            db.get('launcherlogs').query("SELECT `id` AS `id`, `username` AS `username`, `ip` AS `ip`, `date` AS `date`, `mac_adress` AS `mac_adress` FROM `loginlogs` WHERE `username` = ?", [rows[0].username], function (err, rows, fields) {
-                if (err) return next(err)
-                if (rows === undefined || rows.length === 0) return next(undefined, [])
-                return next(undefined, rows)
+    getAddresses: function (id, next) {
+        async.parrallel([
+            // Get mac
+            function (cb) {
+                db.get('auth').query("SELECT address ON mac_addresses WHERE user_id = ? GROUP BY address", [id], function (err, rows) {
+                    if (err)
+                        return cb(err)
+                    cb(undefined, rows.map(function (address) {
+                        return address.address
+                    }, rows))
+                })
+            },
+            // Get ip
+            function (cb) {
+                db.get(currentDB).query("SELECT ip FROM users_connection_logs WHERE user_id = ? GROUP BY ip", [id], function (err, rows) {
+                    if (err)
+                        return cb(err)
+                    cb(undefined, rows.map(function (address) {
+                        return address.address
+                    }, rows))
+                })
+            }
+        ], function (err, results) {
+            if (err)
+                return (next(err))
+            next(undefined, {
+                mac: results[0],
+                ip: results[1]
             })
         })
     },
 
     getWebsiteInfos: function (id, next) {
-        db.get(currentDB).query("SELECT `id` AS `id`, `pseudo` AS `username`, `email` AS `email`, `money` AS `money`, `ip` AS `register_ip`, `skin` AS `has_purchased_skin`, `cape` AS `has_purchased_cape`, `created` AS `register_date`, `obsi-skin_uploaded` AS `skin_uploaded`, `obsi-cape_uploaded` AS `cape_uploaded`, `obsi-obsiguard_enabled` AS `obsiguard_enabled` FROM `users` WHERE `id` = ? LIMIT 1", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `id` AS `id`, `username` AS `username`, `email` AS `email`, `money` AS `money`, `ip` AS `register_ip`, `created_at` AS `register_date` FROM `users` WHERE `id` = ? LIMIT 1", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows[0] === undefined) return next(new Error('User not found'))
             return next(undefined, rows[0])
@@ -103,7 +120,7 @@ module.exports = {
     },
 
     getUsernameUpdateLogs: function (id, next) {
-        db.get(currentDB).query("SELECT `id` AS `id`, `user_id` AS `user_id`, `old_pseudo` AS `old_username`, `new_pseudo` AS `new_username`, `created` AS `update_date` FROM `obsi__pseudo_update_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `id` AS `id`, `user_id` AS `user_id`, `old_username` AS `old_username`, `new_username` AS `new_username`, `created_at` AS `update_date` FROM `users_edit_username_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows.length === 0) return next(undefined, [])
             return next(undefined, rows)
@@ -111,7 +128,7 @@ module.exports = {
     },
 
     getRefunds: function (id, next) {
-        db.get(currentDB).query("SELECT `added_money` AS `added_money` FROM `obsi__refund_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `added_money` AS `added_money` FROM `users_refund_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows.length === 0) return next(undefined, [])
             // formatting
@@ -131,7 +148,11 @@ module.exports = {
     },
 
     getItemsPurchases: function (id, next) {
-        db.get(currentDB).query("SELECT `shop__items_buy_histories`.`created` AS `date`, `shop__items`.`price` AS `price`, `shop__items`.`name` AS `item_name` FROM `shop__items_buy_histories` INNER JOIN `users` ON `users`.`id` = `shop__items_buy_histories`.`user_id` INNER JOIN `shop__items` ON `shop__items`.`id` = `shop__items_buy_histories`.`item_id` WHERE `shop__items_buy_histories`.`user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `shop_items_purchase_histories`.`created_at` AS `date`, `shop_items`.`price` AS `price`, `shop_items`.`name` AS `item_name` " +
+            "FROM `shop_items_purchase_histories` " +
+            "INNER JOIN `users` ON `users`.`id` = `shop_items_purchase_histories`.`user_id` " +
+            "INNER JOIN `shop_items` ON `shop_items`.`id` = `shop_items_purchase_histories`.`item_id` " +
+            "WHERE `shop_items_purchase_histories`.`user_id` = ?", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows.length === 0) return next(undefined, [])
             // formatting
@@ -151,95 +172,37 @@ module.exports = {
     },
 
     getMoneyPurchases: function (id, next) {
-        async.parallel([
-            // paypal
-            function (cb) {
-                db.get(currentDB).query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `shop__paypal_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
-                    if (err) return cb(err)
-                    if (rows === undefined || rows.length === 0) return cb(undefined, [])
-                    // formatting
-                    async.eachOf(rows, function (row, index, callback) {
-                        rows[index] = {
-                            date: row.date,
-                            action_id: 'purchase_money_paypal',
-                            action_type: 'add',
-                            action_message: 'Pay with Paypal',
-                            sold: '+' + row.added_points.toString()
-                        }
-                        callback()
-                    }, function () {
-                        return cb(undefined, rows)
-                    })
-                })
-            },
-            // paysafecard
-            function (cb) {
-                db.get(currentDB).query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `paysafecard__payment_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
-                    if (err) return cb(err)
-                    if (rows === undefined || rows.length === 0) return cb(undefined, [])
-                    // formatting
-                    async.eachOf(rows, function (row, index, callback) {
-                        rows[index] = {
-                            date: row.date,
-                            action_id: 'purchase_money_paysafecard',
-                            action_type: 'add',
-                            action_message: 'Pay with paysafecard',
-                            sold: '+' + row.added_points.toString()
-                        }
-                        callback()
-                    }, function () {
-                        return cb(undefined, rows)
-                    })
-                })
-            },
-            // dedipass
-            function (cb) {
-                db.get(currentDB).query("SELECT `credits_gived` AS `added_points`, `created` AS `date` FROM `shop__dedipass_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
-                    if (err) return cb(err)
-                    if (rows === undefined || rows.length === 0) return cb(undefined, [])
-                    // formatting
-                    async.eachOf(rows, function (row, index, callback) {
-                        rows[index] = {
-                            date: row.date,
-                            action_id: 'purchase_money_dedipass',
-                            action_type: 'add',
-                            action_message: 'Pay with Dédipass',
-                            sold: '+' + row.added_points.toString()
-                        }
-                        callback()
-                    }, function () {
-                        return cb(undefined, rows)
-                    })
-                })
-            },
-            // stripe
-            function (cb) {
-                db.get(currentDB).query("SELECT `credits` AS `added_points`, `created` AS `date` FROM `shopplus__stripe_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
-                    if (err) return cb(err)
-                    if (rows === undefined || rows.length === 0) return cb(undefined, [])
-                    // formatting
-                    async.eachOf(rows, function (row, index, callback) {
-                        rows[index] = {
-                            date: row.date,
-                            action_id: 'purchase_money_stripe',
-                            action_type: 'add',
-                            action_message: 'Pay with Stripe',
-                            sold: '+' + row.added_points.toString()
-                        }
-                        callback()
-                    }, function () {
-                        return cb(undefined, rows)
-                    })
-                })
-            }
-        ], function (err, results) {
-            if (err) return next(err)
-            next(undefined, [].concat(results[0], results[1], results[2], results[3]))
+        result = []
+
+        db.get(currentDB).query("SELECT `money` AS `added_points`, `amount` AS `amount`, `transaction_type` AS `type`, `created_at` AS `date` " +
+            "FROM `shop_credit_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+            if (err)
+                return next(err)
+            if (rows === undefined || rows.length === 0)
+                return next(undefined, [])
+            // formatting
+            async.eachOf(rows, function (row, index, callback) {
+                rows[index] = {
+                    date: row.date,
+                    action_id: 'purchase_money_' + row.type.toLowerCase(),
+                    action_type: 'add',
+                    action_message: 'Pay ' + row.amount + '€ with ' + row.type,
+                    sold: '+' + row.added_points.toString()
+                }
+                callback()
+            }, function () {
+                if (err)
+                    return next(err)
+                next(undefined, result)
+            })
         })
     },
 
     getMoneyTransfers: function (id, next) {
-        db.get(currentDB).query("SELECT `shop__points_transfer_histories`.`created` AS `date`, `shop__points_transfer_histories`.`points` AS `how`, `users`.`pseudo` AS `to` FROM `shop__points_transfer_histories` INNER JOIN `users` ON `users`.`id` = `shop__points_transfer_histories`.`user_id` WHERE `shop__points_transfer_histories`.`author_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `users_transfer_money_histories`.`created_at` AS `date`, `users_transfer_money_histories`.`amount` AS `how`, `users`.`pseudo` AS `to` " +
+            "FROM `users_transfer_money_histories` " +
+            "INNER JOIN `users` ON `users`.`id` = `users_transfer_money_histories`.`to` " +
+            "WHERE `users_transfer_money_histories`.`user_id` = ?", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows.length === 0) return next(undefined, [])
             // formatting
@@ -259,7 +222,10 @@ module.exports = {
     },
 
     getMoneyTransfersFromOthers: function (id, next) {
-        db.get(currentDB).query("SELECT `shop__points_transfer_histories`.`created` AS `date`, `shop__points_transfer_histories`.`points` AS `how`, `users`.`pseudo` AS `from` FROM `shop__points_transfer_histories` INNER JOIN `users` ON `users`.`id` = `shop__points_transfer_histories`.`author_id` WHERE `shop__points_transfer_histories`.`user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `users_transfer_money_histories`.`created` AS `date`, `users_transfer_money_histories`.`amount` AS `how`, `users`.`pseudo` AS `from` " +
+            "FROM `users_transfer_money_histories` " +
+            "INNER JOIN `users` ON `users`.`id` = `users_transfer_money_histories`.`user_id` " +
+            "WHERE `users_transfer_money_histories`.`to` = ?", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows.length === 0) return next(undefined, [])
             // formatting
@@ -279,7 +245,11 @@ module.exports = {
     },
 
     getYoutubeRemunerations: function (id, next) {
-        db.get(currentDB).query("SELECT `obsi__youtube_videos_remuneration_histories`.`title` AS `title`, `obsi__youtube_videos_remuneration_histories`.`remuneration` AS `remuneration`, `obsi__youtube_videos_remuneration_histories`.`created` AS `date` FROM `obsi__youtube_videos_remuneration_histories` INNER JOIN `obsi__youtube_channels` ON `obsi__youtube_videos_remuneration_histories`.`channel_id` = `obsi__youtube_channels`.`youtube_channel_id` WHERE `obsi__youtube_channels`.`user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `users_youtube_channel_videos`.`title` AS `title`, `users_youtube_channel_video_remuneration_histories`.`remuneration` AS `remuneration`, `users_youtube_channel_video_remuneration_histories`.`created_at` AS `date`" +
+            "FROM `users_youtube_channel_video_remuneration_histories` " +
+            "INNER JOIN `users_youtube_channel_videos` ON `users_youtube_channel_video_remuneration_histories`.`video_id` = `users_youtube_channel_videos`.`id` " +
+            "INNER JOIN `users_youtube_channels` ON `users_youtube_channel_video_remuneration_histories`.`channel_id` = `users_youtube_channels`.`id` " +
+            "WHERE `users_youtube_channels`.`user_id` = ?", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows.length === 0) return next(undefined, [])
             // formatting
@@ -296,46 +266,5 @@ module.exports = {
                 return next(undefined, rows)
             })
         })
-    },
-
-    getMarketPurchases: function (id, next) {
-        db.get(currentDB).query("SELECT `playermarket__purchase_histories`.`price` AS `price`,`playermarket__purchase_histories`.`created` AS `date`, `users`.`pseudo` AS `seller_username` FROM `playermarket__purchase_histories` INNER JOIN `users` ON `users`.`id` = `playermarket__purchase_histories`.`seller_id` WHERE `user_id` = ?", [id], function (err, rows, fields) {
-            if (err) return next(err)
-            if (rows === undefined || rows.length === 0) return next(undefined, [])
-            // formatting
-            async.eachOf(rows, function (row, index, cb) {
-                rows[index] = {
-                    date: row.date,
-                    action_id: 'webmarket',
-                    action_type: 'remove',
-                    action_message: 'Purchase from ' + row.seller_username + ' for ' + row.price.toString(),
-                    sold: '-' + row.price.toString()
-                }
-                cb()
-            }, function () {
-                return next(undefined, rows)
-            })
-        })
-    },
-
-    getMarketSales: function (id, next) {
-        db.get(currentDB).query("SELECT  `playermarket__purchase_histories`.`price` AS  `price` ,  `playermarket__purchase_histories`.`created` AS  `date` ,  `users`.`pseudo` AS  `buyer_username` FROM  `playermarket__purchase_histories` INNER JOIN  `users` ON  `users`.`id` =  `playermarket__purchase_histories`.`user_id` WHERE  `seller_id` = ?", [id], function (err, rows, fields) {
-            if (err) return next(err)
-            if (rows === undefined || rows.length === 0) return next(undefined, [])
-            // formatting
-            async.eachOf(rows, function (row, index, cb) {
-                rows[index] = {
-                    date: row.date,
-                    action_id: 'webmarket',
-                    action_type: 'add',
-                    action_message: 'Sale for ' + row.price.toString() + ' to ' + row.buyer_username,
-                    sold: '+' + row.price.toString()
-                }
-                cb()
-            }, function () {
-                return next(undefined, rows)
-            })
-        })
     }
-
 }

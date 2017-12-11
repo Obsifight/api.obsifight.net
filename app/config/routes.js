@@ -14,11 +14,9 @@ module.exports = {
     'post /user/:username/money/transfer': {'function': 'UserController.transferMoney', protected: true},
     'get /user/:username/vote/can': 'UserController.canVote',
     'get /users/staff/:premium?': 'UserController.getStaff',
-    'get /user/:username/stats': {'function': 'UserController.getStats', protected: true},
 
     'post /user/find': {'function': 'UserController.findUsers', protected: true},
     'post /user/infos/username': {'function': 'UserController.getUsersInfos', protected: true},
-    'get /user/compare/:username1/:username2': {'function': 'UserController.compareUsers', protected: true},
 
     'get /sanction/bans': {'function': 'SanctionController.getBans', protected: true},
     'get /sanction/bans/:id': {'function': 'SanctionController.getBan', protected: true},

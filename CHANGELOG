@@ -1,3 +1,6 @@
+1.9.0
+- Update for ObsiFight v8
+
 1.8.0
 - Add GET /user/:username/money
 - Add POST /user/:username/money/transfer
