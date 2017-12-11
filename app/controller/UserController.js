@@ -54,7 +54,7 @@ module.exports = {
                 },
 
                 function (callback) {
-                    db.get(currentDB).query('SELECT users.username, users_connection_logs.ip, users_connection_logs.created_at as date, users_connection_logs.id' +
+                    db.get(currentDB).query('SELECT users.username, users_connection_logs.ip, users_connection_logs.created_at as date, users_connection_logs.id ' +
                         'FROM users_connection_logs ' +
                         'INNER JOIN users ON users.id = users_connection_logs.user_id ' +
                         'WHERE user_id = ? ORDER BY id DESC LIMIT 1', [ids.web], function (err, rows) {
