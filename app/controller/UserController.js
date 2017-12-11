@@ -51,6 +51,20 @@ module.exports = {
                         })
                         return callback(undefined, formattedData)
                     })
+                },
+
+                function (callback) {
+                    db.get(currentDB).query('SELECT users.username, users_connection_logs.ip, users_connection_logs.created_at as date, users_connection_logs.id ' +
+                        'FROM users_connection_logs ' +
+                        'INNER JOIN users ON users.id = users_connection_logs.user_id ' +
+                        'WHERE user_id = ? ORDER BY id DESC LIMIT 1', [ids.web], function (err, rows) {
+                        if (err)
+                            return callback(err)
+                        if (rows === undefined || rows.length === 0)
+                            return callback(undefined, [])
+                        rows.mac_adress = null;
+                        callback(undefined, rows[0])
+                    })
                 }
 
             ], function (err, results) {
@@ -70,7 +84,7 @@ module.exports = {
                         },
                         uuid: ids.uuid,
                         registerDate: results[1].register_date,
-                        lastConnection: results[2][results[1].length - 1], // launcher's logs
+                        lastConnection: results[3], // launcher's logs
                         adresses: {
                             mac: results[0].mac,
                             ip: results[0].ip
@@ -185,9 +199,9 @@ module.exports = {
 
     getStaff: function (req, res) {
        var ranks = {}
-       db.get('permissions').query('SELECT memberships.display_name AS member, entities.display_name FROM memberships' +
-           'INNER JOIN entities ON entities.id = memberships.group_id' +
-           'WHERE entities.priority > 1' +
+       db.get('permissions').query('SELECT memberships.display_name AS member, entities.display_name FROM memberships ' +
+           'INNER JOIN entities ON entities.id = memberships.group_id ' +
+           'WHERE entities.priority > 1 ' +
            'ORDER BY entities.priority DESC', function (err, rows) {
            if (err) {
                console.error(err)
@@ -208,7 +222,7 @@ module.exports = {
         if (req.params.username === undefined)
             return res.status(400).json({status: false, error: 'Missing user\'s name.'})
         // find user
-        db.get(currentDB).query("SELECT `id` AS `id` FROM users WHERE `pseudo` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `id` AS `id` FROM users WHERE `username` = ? LIMIT 1", [req.params.username], function (err, rows, fields) {
             if (err) {
                 console.error(err)
                 return res.status(500).json({status: false, error: 'Internal error.'})
@@ -246,7 +260,7 @@ module.exports = {
                 },
                 // get old balance
                 function (callback) {
-                    db.get('web_v6').query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
+                    db.get('web_v7').query("SELECT `money` AS `balance` FROM `users` WHERE `id` = ?", [rows[0].id], function (err, rows, fields) {
                         if (err) return callback(err)
                         if (!rows[0]) return callback(undefined, 0.0)
                         callback(undefined, parseFloat(rows[0].balance))
@@ -378,7 +392,7 @@ module.exports = {
                 if (!req.body.mac || req.body.mac.length < 5)
                     return callback(undefined, [])
                 // find
-                db.get('auth').query("SELECT user_id FROM mac_addresses WHERE address LIKE '%?%' GROUP BY user_id", [req.body.mac], function (err, rows, fields) {
+                db.get('auth').query("SELECT user_id FROM mac_addresses WHERE address LIKE '%" + req.body.mac + "%' GROUP BY user_id", function (err, rows, fields) {
                     if (err) return callback(err)
                     if (!rows || rows.length === 0) return callback(undefined, [])
                     return callback(undefined, rows)

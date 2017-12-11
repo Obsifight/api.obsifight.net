@@ -137,7 +137,7 @@ module.exports = {
     },
 
     getRefunds: function (id, next) {
-        db.get(currentDB).query("SELECT `added_money` AS `added_money` FROM `users_refund_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
+        db.get(currentDB).query("SELECT `amount` AS `added_money` FROM `users_refund_histories` WHERE `user_id` = ?", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows.length === 0) return next(undefined, [])
             // formatting
@@ -208,7 +208,7 @@ module.exports = {
     },
 
     getMoneyTransfers: function (id, next) {
-        db.get(currentDB).query("SELECT `users_transfer_money_histories`.`created_at` AS `date`, `users_transfer_money_histories`.`amount` AS `how`, `users`.`pseudo` AS `to` " +
+        db.get(currentDB).query("SELECT `users_transfer_money_histories`.`created_at` AS `date`, `users_transfer_money_histories`.`amount` AS `how`, `users`.`username` AS `to` " +
             "FROM `users_transfer_money_histories` " +
             "INNER JOIN `users` ON `users`.`id` = `users_transfer_money_histories`.`to` " +
             "WHERE `users_transfer_money_histories`.`user_id` = ?", [id], function (err, rows, fields) {
@@ -231,7 +231,7 @@ module.exports = {
     },
 
     getMoneyTransfersFromOthers: function (id, next) {
-        db.get(currentDB).query("SELECT `users_transfer_money_histories`.`created` AS `date`, `users_transfer_money_histories`.`amount` AS `how`, `users`.`pseudo` AS `from` " +
+        db.get(currentDB).query("SELECT `users_transfer_money_histories`.`created_at` AS `date`, `users_transfer_money_histories`.`amount` AS `how`, `users`.`username` AS `from` " +
             "FROM `users_transfer_money_histories` " +
             "INNER JOIN `users` ON `users`.`id` = `users_transfer_money_histories`.`user_id` " +
             "WHERE `users_transfer_money_histories`.`to` = ?", [id], function (err, rows, fields) {
@@ -257,7 +257,7 @@ module.exports = {
         db.get(currentDB).query("SELECT `users_youtube_channel_videos`.`title` AS `title`, `users_youtube_channel_video_remuneration_histories`.`remuneration` AS `remuneration`, `users_youtube_channel_video_remuneration_histories`.`created_at` AS `date`" +
             "FROM `users_youtube_channel_video_remuneration_histories` " +
             "INNER JOIN `users_youtube_channel_videos` ON `users_youtube_channel_video_remuneration_histories`.`video_id` = `users_youtube_channel_videos`.`id` " +
-            "INNER JOIN `users_youtube_channels` ON `users_youtube_channel_video_remuneration_histories`.`channel_id` = `users_youtube_channels`.`id` " +
+            "INNER JOIN `users_youtube_channels` ON `users_youtube_channel_videos`.`channel_id` = `users_youtube_channels`.`id` " +
             "WHERE `users_youtube_channels`.`user_id` = ?", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows.length === 0) return next(undefined, [])
