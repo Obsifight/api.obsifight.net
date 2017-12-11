@@ -2,7 +2,7 @@ module.exports = {
 
   port: process.env.PORT || 8080,
 
-  currentVersion: 'v7',
+  currentVersion: '8',
 
   staff: {
     ranks: [

@@ -122,7 +122,7 @@ for (var route in routes) {
 // Database ==============
 // =======================
 global.db = require('./vendors/db').setConfig(require('./app/config/db'))
-global.currentDB = 'web_' + config.currentVersion
+global.currentDB = 'web_v' + config.currentVersion
 
 var fs = require('fs')
 fs.readdir('./app/models', function (err, files) {

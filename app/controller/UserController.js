@@ -27,11 +27,6 @@ module.exports = {
 
             async.parallel([
 
-                // get uuid
-                function (callback) {
-                    User.getAuthInfos(ids.auth, callback)
-                },
-
                 // get launcher logs
                 function (callback) {
                     User.getAuthLogs(ids.auth, function (err, rows) {
@@ -77,7 +72,7 @@ module.exports = {
 
                 // mac
                 var adresses = []
-                results[1].forEach(function (connection) {
+                results[0].forEach(function (connection) {
                     if (connection.mac_adress)
                         connection.mac_adress.forEach(function (adress) {
                             adresses.push({adress: adress})
@@ -90,15 +85,15 @@ module.exports = {
                     data: {
                         ids: ids,
                         usernames: {
-                            histories: results[3],
-                            current: results[2].username
+                            histories: results[2],
+                            current: results[1].username
                         },
-                        uuid: results[0].uuid,
-                        registerDate: results[2].register_date,
-                        lastConnection: results[1][results[1].length - 1], // launcher's logs
+                        uuid: ids.uuid,
+                        registerDate: results[1].register_date,
+                        lastConnection: results[2][results[1].length - 1], // launcher's logs
                         adresses: {
                             mac: Object.keys(_.groupBy(adresses, 'adress')).remove('null'),
-                            ip: Object.keys(_.groupBy(results[1], 'ip')).remove('null')
+                            ip: Object.keys(_.groupBy(results[0], 'ip')).remove('null')
                         }
                     }
                 })
