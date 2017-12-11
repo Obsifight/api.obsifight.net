@@ -51,6 +51,17 @@ module.exports = {
                         })
                         return callback(undefined, formattedData)
                     })
+                },
+
+                function (callback) {
+                    db.get(currentDB).query('SELECT users.username, ip, created_at as date, id FROM users_connection_logs WHERE user_id = ? ORDER BY id DESC LIMIT 1', [ids.web], function (err, rows) {
+                        if (err)
+                            return callback(err)
+                        if (rows === undefined || rows.length === 0)
+                            return callback(undefined, [])
+                        rows.mac_adress = null;
+                        callback(undefined, rows[0])
+                    })
                 }
 
             ], function (err, results) {
@@ -70,7 +81,7 @@ module.exports = {
                         },
                         uuid: ids.uuid,
                         registerDate: results[1].register_date,
-                        lastConnection: results[2][results[1].length - 1], // launcher's logs
+                        lastConnection: results[3], // launcher's logs
                         adresses: {
                             mac: results[0].mac,
                             ip: results[0].ip
