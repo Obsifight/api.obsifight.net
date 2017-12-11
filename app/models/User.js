@@ -257,7 +257,7 @@ module.exports = {
         db.get(currentDB).query("SELECT `users_youtube_channel_videos`.`title` AS `title`, `users_youtube_channel_video_remuneration_histories`.`remuneration` AS `remuneration`, `users_youtube_channel_video_remuneration_histories`.`created_at` AS `date`" +
             "FROM `users_youtube_channel_video_remuneration_histories` " +
             "INNER JOIN `users_youtube_channel_videos` ON `users_youtube_channel_video_remuneration_histories`.`video_id` = `users_youtube_channel_videos`.`id` " +
-            "INNER JOIN `users_youtube_channels` ON `users_youtube_channel_video_remuneration_histories`.`channel_id` = `users_youtube_channels`.`id` " +
+            "INNER JOIN `users_youtube_channels` ON `users_youtube_channel_videos`.`channel_id` = `users_youtube_channels`.`id` " +
             "WHERE `users_youtube_channels`.`user_id` = ?", [id], function (err, rows, fields) {
             if (err) return next(err)
             if (rows === undefined || rows.length === 0) return next(undefined, [])
