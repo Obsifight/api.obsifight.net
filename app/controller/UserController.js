@@ -318,8 +318,6 @@ module.exports = {
             return res.status(400).json({status: false, error: 'Missing user\'s name.'})
         if (req.body === undefined || req.body.amount === undefined || req.body.amount.length === 0)
             return res.status(400).json({status: false, error: 'Missing amount.'})
-        if (req.body === undefined || req.body.receiver === undefined || (req.body.receiver !== null && req.body.receiver.length === 0))
-            return res.status(400).json({status: false, error: 'Missing receiver\'s username.'})
         var amount = parseFloat(req.body.amount)
         var receiver = req.body.receiver
         // find user
@@ -334,7 +332,7 @@ module.exports = {
             if (amount > user.money)
                 return res.status(402).json({status: false, error: 'User didn\'t have enough money.'})
             // find receiver
-            if (receiver === null) {
+            if (!receiver) {
                 db.get(currentDB).query("UPDATE users SET `money` = ? WHERE `id` = ?", [user.money - amount, user.id], function (err) {
                     if (err) {
                         console.error(err)
